@@ -1,0 +1,91 @@
+body {
+    background-color: #FDFBF7;
+    color: #2D181C;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    overflow-x: hidden;
+}
+
+/* Subtle floral mandala luxury background pattern */
+.bg-luxury-pattern {
+    background-color: #5A1827;
+    background-image: 
+        radial-gradient(circle at 15% 20%, rgba(212, 175, 55, 0.16) 0%, transparent 45%),
+        radial-gradient(circle at 85% 80%, rgba(212, 140, 152, 0.18) 0%, transparent 50%),
+        repeating-linear-gradient(45deg, rgba(212, 175, 55, 0.03) 0px, rgba(212, 175, 55, 0.03) 1px, transparent 1px, transparent 16px);
+}
+
+.gold-border-gradient {
+    border: 1px solid rgba(212, 175, 55, 0.45);
+}
+
+.gold-text-shimmer {
+    background: linear-gradient(90deg, #F3E5AB 0%, #D4AF37 50%, #FFF6D6 75%, #D4AF37 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.card-hover {
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.card-hover:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 36px -10px rgba(90, 24, 39, 0.16), 0 0 15px rgba(212, 175, 55, 0.18);
+}
+
+/* Hide scrollbar for category pills on mobile */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+.no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #F7F2E9;
+}
+::-webkit-scrollbar-thumb {
+    background: #D48C98;
+    border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: #5A1827;
+}
+
+/* Nail Swatch Visuals */
+.swatch-maroon-silver {
+    background: linear-gradient(135deg, #5A1827 0%, #5A1827 65%, #E2E8F0 80%, #94A3B8 100%);
+}
+.swatch-dusty-rose {
+    background: linear-gradient(135deg, #E2A3AE 0%, #D48C98 60%, #C07380 100%);
+}
+.swatch-maroon-french {
+    background: linear-gradient(180deg, #5A1827 0%, #5A1827 28%, #F8E2E6 30%, #F4D5DC 100%);
+}
+.swatch-glitter-ombre {
+    background: linear-gradient(180deg, #D4AF37 0%, #E7C996 45%, #F9E5E8 100%);
+}
+
+/* Print Media Styles for Pamphlet / Rate Card View */
+@media print {
+    body {
+        background: #FDFBF7 !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+    .no-print {
+        display: none !important;
+    }
+    .print-only-container {
+        box-shadow: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-width: 100% !important;
+        width: 100% !important;
+    }
+                                }
