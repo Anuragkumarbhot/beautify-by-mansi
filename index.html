@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beautify by Mansi | Festive Season Price & Offer List</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Cormorant Garamond, Playfair Display & Plus Jakarta Sans -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Playfair+Display:ital,wght@0,500;0,600;0,700;0,800;1,500&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Custom Stylesheet -->
+    <link rel="stylesheet" href="assets/css/style.css">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        maroon: {
+                            DEFAULT: '#5A1827',
+                            dark: '#3D0E19',
+                            light: '#7B2438',
+                            soft: '#F9F1F3'
+                        },
+                        rose: {
+                            dusty: '#D48C98',
+                            light: '#F4E3E6',
+                            deep: '#B56576'
+                        },
+                        gold: {
+                            DEFAULT: '#D4AF37',
+                            light: '#F3E5AB',
+                            shimmer: '#E5C158',
+                            dark: '#AA820A'
+                        },
+                        ivory: {
+                            DEFAULT: '#FDFBF7',
+                            warm: '#F7F2E9',
+                            card: '#FFFFFF'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Playfair Display"', '"Cormorant Garamond"', 'Georgia', 'serif'],
+                        display: ['"Cormorant Garamond"', 'Georgia', 'serif'],
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif']
+                    },
+                    boxShadow: {
+                        'luxury': '0 12px 32px -8px rgba(90, 24, 39, 0.12), 0 4px 12px -2px rgba(212, 175, 55, 0.08)',
+                        'gold-glow': '0 0 20px rgba(212, 175, 55, 0.28)'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="min-h-screen flex flex-col justify-between selection:bg-maroon selection:text-gold-light">
+
+    <!-- Top Festive Announcement Marquee / Strip -->
+    <div class="bg-maroon-dark text-gold-light text-xs sm:text-sm py-2 px-4 border-b border-gold/30 no-print">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2 font-medium">
+                <span class="inline-block w-2 h-2 rounded-full bg-gold animate-ping"></span>
+                <span><strong class="text-white">FESTIVE GLAM SALE:</strong> Early Bird ₹500 Advance Slot Gets <span class="underline decoration-gold">FREE Eyelashes & Hair Accessory Setting!</span></span>
+            </div>
+            <div class="hidden md:flex items-center gap-4 text-xs text-rose-light">
+                <span><i class="fa-solid fa-sparkles text-gold mr-1"></i> 100% Genuine Luxury Brands</span>
+                <span><i class="fa-solid fa-location-dot text-gold mr-1"></i> <span id="topBarLocation">Studio & Venue Service Available</span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- HERO BANNER -->
+    <header class="bg-luxury-pattern text-ivory relative overflow-hidden border-b-2 border-gold/50 no-print">
+        <!-- Decorative Corner SVG Ornaments -->
+        <svg class="absolute top-0 left-0 w-36 h-36 text-gold/15 pointer-events-none" viewBox="0 0 100 100" fill="currentColor">
+            <path d="M0 0 L100 0 C60 15 15 60 0 100 Z"></path>
+        </svg>
+        <svg class="absolute bottom-0 right-0 w-44 h-44 text-gold/15 pointer-events-none transform rotate-180" viewBox="0 0 100 100" fill="currentColor">
+            <path d="M0 0 L100 0 C60 15 15 60 0 100 Z"></path>
+        </svg>
+
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-8 pb-10 relative z-10">
+            <!-- Top Row: Brand Badge & Quick Social Caption Button -->
+            <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-gold/40 text-gold-light text-xs sm:text-sm font-medium tracking-wide">
+                    <i class="fa-solid fa-crown text-gold"></i>
+                    <span id="heroSeasonBadge">Karwa Chauth • Diwali • Wedding Season Special Offers</span>
+                </div>
+
+                <div class="flex items-center gap-2">
+                    <button onclick="openCaptionModal()" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gold/20 hover:bg-gold/30 text-gold-light border border-gold/50 text-xs sm:text-sm font-semibold transition">
+                        <i class="fa-brands fa-instagram"></i>
+                        <span>Promo Caption & Share</span>
+                    </button>
+                    <a id="headerWhatsAppQuick" href="#" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-emerald-600/90 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold transition shadow">
+                        <i class="fa-brands fa-whatsapp"></i>
+                        <span id="headerPhoneDisplay">Book Slot</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Main Brand Title & Tagline -->
+            <div class="text-center max-w-3xl mx-auto">
+                <div class="inline-flex items-center justify-center gap-3 mb-2">
+                    <span class="h-[1px] w-8 sm:w-16 bg-gradient-to-r from-transparent to-gold"></span>
+                    <span class="uppercase tracking-[0.28em] text-xs sm:text-sm text-rose-dusty font-semibold">Luxury Bridal & Festive Studio</span>
+                    <span class="h-[1px] w-8 sm:w-16 bg-gradient-to-l from-transparent to-gold"></span>
+                </div>
+
+                <h1 id="brandTitleDisplay" class="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold tracking-tight gold-text-shimmer drop-shadow-sm mb-3">
+                    Beautify by Mansi
+                </h1>
+
+                <p id="brandTaglineDisplay" class="font-display italic text-lg sm:text-2xl text-rose-light tracking-wide mb-6">
+                    Makeup &bull; Hair &bull; Nail Extensions &bull; Festive Glam
+                </p>
+
+                <!-- Festive Highlights Pill Strip -->
+                <div class="flex flex-wrap items-center justify-center gap-2 sm:gap-4 text-xs sm:text-sm text-ivory/90 mb-8">
+                    <div class="flex items-center gap-1.5 bg-maroon-dark/60 px-3 py-1.5 rounded-full border border-gold/25">
+                        <i class="fa-solid fa-wand-magic-sparkles text-gold"></i>
+                        <span>Party Glam from <strong class="text-gold-light">₹1,999</strong></span>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-maroon-dark/60 px-3 py-1.5 rounded-full border border-gold/25">
+                        <i class="fa-solid fa-gem text-rose-dusty"></i>
+                        <span>Bridal Packages from <strong class="text-gold-light">₹15,999</strong></span>
+                    </div>
+                    <div class="flex items-center gap-1.5 bg-maroon-dark/60 px-3 py-1.5 rounded-full border border-gold/25">
+                        <i class="fa-solid fa-hand-sparkles text-gold"></i>
+                        <span>Festive Press-On Nails <strong class="text-gold-light">₹499</strong></span>
+                    </div>
+                </div>
+
+                <!-- MODE SWITCHER TABS (Interactive Booking / Printable Rate Card / Edit Prices) -->
+                <div class="inline-flex flex-wrap items-center justify-center p-1.5 rounded-2xl bg-maroon-dark/80 border border-gold/40 backdrop-blur-md shadow-gold-glow gap-1">
+                    <button id="modeBtnBooking" onclick="switchAppMode('booking')" class="mode-tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 bg-gold text-maroon-dark shadow">
+                        <i class="fa-solid fa-calendar-check"></i>
+                        <span>Interactive Client Booking</span>
+                    </button>
+                    <button id="modeBtnPamphlet" onclick="switchAppMode('pamphlet')" class="mode-tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 text-ivory/85 hover:text-white hover:bg-white/10">
+                        <i class="fa-solid fa-file-invoice"></i>
+                        <span>Printable Rate Card / Pamphlet</span>
+                    </button>
+                    <button id="modeBtnEditor" onclick="switchAppMode('editor')" class="mode-tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 text-ivory/85 hover:text-white hover:bg-white/10">
+                        <i class="fa-solid fa-sliders"></i>
+                        <span>Edit Prices & Phone Number</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        <!-- ========================================== -->
+        <!-- VIEW 1: INTERACTIVE CLIENT BOOKING VIEW    -->
+        <!-- ========================================== -->
+        <section id="viewBooking" class="space-y-8">
+            
+            <!-- Interactive Nail Shade Visualizer Strip -->
+            <div class="bg-gradient-to-r from-maroon-soft via-white to-rose-light/50 rounded-2xl p-4 sm:p-5 border border-rose-dusty/40 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-4">
+                <div class="flex items-center gap-3.5">
+                    <div class="w-12 h-12 rounded-2xl bg-maroon text-gold flex items-center justify-center text-xl shrink-0 shadow">
+                        <i class="fa-solid fa-hand-sparkles"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-maroon bg-rose-light px-2.5 py-0.5 rounded-full">Trending Festive Add-On</span>
+                            <span class="text-xs font-semibold text-emerald-700">Flat 38% OFF</span>
+                        </div>
+                        <h2 class="font-serif text-lg sm:text-xl font-bold text-maroon-dark mt-0.5">
+                            Custom Festive Press-On Nails & Nail Art Bar
+                        </h2>
+                        <p class="text-xs sm:text-sm text-gray-600">
+                            Tap a signature festive shade below to pre-select your preferred nail style for your booking:
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Swatch Selector Pills -->
+                <div class="flex flex-wrap items-center justify-center gap-2.5">
+                    <button onclick="selectNailShade('Maroon & Silver Festive Glam')" data-shade="Maroon & Silver Festive Glam" class="nail-swatch-btn group flex items-center gap-2 px-3 py-2 rounded-xl bg-white border-2 border-maroon shadow-sm transition text-xs font-semibold text-maroon-dark">
+                        <span class="w-5 h-6 rounded-full swatch-maroon-silver border border-gold shadow-inner block"></span>
+                        <span>Maroon & Silver Glam</span>
+                        <i class="fa-solid fa-circle-check text-maroon swatch-check"></i>
+                    </button>
+                    <button onclick="selectNailShade('Dusty Rose Elegance')" data-shade="Dusty Rose Elegance" class="nail-swatch-btn group flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 hover:border-rose-dusty shadow-sm transition text-xs font-semibold text-gray-700">
+                        <span class="w-5 h-6 rounded-full swatch-dusty-rose border border-rose-deep shadow-inner block"></span>
+                        <span>Dusty Rose</span>
+                        <i class="fa-solid fa-circle-check text-maroon hidden swatch-check"></i>
+                    </button>
+                    <button onclick="selectNailShade('Maroon French Tips')" data-shade="Maroon French Tips" class="nail-swatch-btn group flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 hover:border-rose-dusty shadow-sm transition text-xs font-semibold text-gray-700">
+                        <span class="w-5 h-6 rounded-full swatch-maroon-french border border-maroon/40 shadow-inner block"></span>
+                        <span>Maroon French Tip</span>
+                        <i class="fa-solid fa-circle-check text-maroon hidden swatch-check"></i>
+                    </button>
+                    <button onclick="selectNailShade('Champagne Glitter Ombre')" data-shade="Champagne Glitter Ombre" class="nail-swatch-btn group flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 hover:border-rose-dusty shadow-sm transition text-xs font-semibold text-gray-700">
+                        <span class="w-5 h-6 rounded-full swatch-glitter-ombre border border-gold shadow-inner block"></span>
+                        <span>Glitter Ombre</span>
+                        <i class="fa-solid fa-circle-check text-maroon hidden swatch-check"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Category Filter Tabs & Search Bar -->
+            <div class="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 sticky top-2 z-20 bg-ivory/95 backdrop-blur-md py-3 px-3 rounded-2xl border border-gold/30 shadow-sm">
+                <!-- Category Filter Pills -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0 no-scrollbar">
+                    <button onclick="filterCategory('all')" data-cat="all" class="cat-tab-btn shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition bg-maroon text-gold-light shadow">
+                        All Festive Offers (13)
+                    </button>
+                    <button onclick="filterCategory('party')" data-cat="party" class="cat-tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-ivory-warm text-maroon-dark hover:bg-rose-light/60">
+                        💄 Festive & Party Makeup
+                    </button>
+                    <button onclick="filterCategory('bridal')" data-cat="bridal" class="cat-tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-ivory-warm text-maroon-dark hover:bg-rose-light/60">
+                        👰 Pre-Wedding & Bridal
+                    </button>
+                    <button onclick="filterCategory('nails')" data-cat="nails" class="cat-tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-ivory-warm text-maroon-dark hover:bg-rose-light/60">
+                        💅 Nail Art & Press-Ons
+                    </button>
+                    <button onclick="filterCategory('combos')" data-cat="combos" class="cat-tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-ivory-warm text-maroon-dark hover:bg-rose-light/60">
+                        🎁 Exclusive Combos
+                    </button>
+                </div>
+
+                <!-- Search input -->
+                <div class="relative min-w-[220px]">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-maroon/50 text-xs"></i>
+                    <input id="packageSearchInput" oninput="handleSearchPackages(this.value)" type="text" placeholder="Search HD, Airbrush, Bridal, Nails..." class="w-full pl-9 pr-8 py-2 rounded-xl bg-white border border-rose-dusty/40 text-xs sm:text-sm focus:outline-none focus:border-maroon">
+                </div>
+            </div>
+
+            <!-- Two-Column Layout: Left = Categorized Packages, Right = Sticky Estimate & WhatsApp Booking -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                
+                <!-- Left 8 Cols: Package Cards -->
+                <div id="packagesListContainer" class="lg:col-span-8 space-y-10">
+                    <!-- Populated dynamically via assets/js/app.js -->
+                </div>
+
+                <!-- Right 4 Cols: Sticky Estimate & WhatsApp Booking Calculator -->
+                <aside class="lg:col-span-4 lg:sticky lg:top-20">
+                    <div class="bg-white rounded-3xl border-2 border-gold/50 shadow-luxury overflow-hidden">
+                        <!-- Calculator Header -->
+                        <div class="bg-luxury-pattern text-ivory p-5 border-b border-gold/40">
+                            <div class="flex items-center justify-between">
+                                <span class="text-xs uppercase tracking-widest text-gold-light font-semibold">Instant Glam Estimator</span>
+                                <button onclick="clearSelectedPackages()" class="text-xs text-rose-light hover:text-white underline">Reset</button>
+                            </div>
+                            <h3 class="font-serif text-2xl font-bold mt-1">Your Festive Booking</h3>
+                            <p class="text-xs text-ivory/80 mt-0.5">Select packages on the left to calculate savings & book on WhatsApp</p>
+                        </div>
+
+                        <div class="p-5 space-y-5">
+                            <!-- Selected Nail Shade Indicator -->
+                            <div class="flex items-center justify-between bg-maroon-soft/70 px-3.5 py-2.5 rounded-xl border border-rose-dusty/30 text-xs">
+                                <span class="text-gray-600 font-medium"><i class="fa-solid fa-paintbrush text-maroon mr-1.5"></i>Preferred Nail Style:</span>
+                                <span id="selectedShadeLabel" class="font-bold text-maroon-dark">Maroon & Silver Festive Glam</span>
+                            </div>
+
+                            <!-- Selected Packages List -->
+                            <div>
+                                <div class="flex items-center justify-between text-xs font-bold uppercase tracking-wider text-gray-500 mb-2">
+                                    <span>Selected Services (<span id="selectedCountBadge">0</span>)</span>
+                                    <span>Festive Price</span>
+                                </div>
+                                <div id="selectedPackagesList" class="space-y-2 max-h-52 overflow-y-auto pr-1">
+                                    <!-- Populated dynamically -->
+                                </div>
+                            </div>
+
+                            <!-- Early Bird Perks Checkbox -->
+                            <label class="flex items-start gap-2.5 p-3 rounded-xl bg-amber-50/80 border border-gold/50 cursor-pointer text-xs">
+                                <input id="earlyBirdCheckbox" type="checkbox" checked onchange="updateCalculatorSummary()" class="mt-0.5 accent-maroon rounded">
+                                <div>
+                                    <span class="font-bold text-maroon-dark block">Lock Early Bird ₹500 Advance Slot</span>
+                                   
