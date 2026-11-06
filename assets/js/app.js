@@ -255,7 +255,8 @@ function updateCalculatorSummary() {
     if(list) list.innerHTML=selected.length?selected.map(p=>'<div class="selected-row"><div><b>'+escapeHTML(p.name)+'</b><small><del>'+formatINR(p.originalPrice)+'</del></small></div><strong>'+formatINR(p.price)+'</strong><button aria-label="Remove '+escapeHTML(p.name)+'" onclick="togglePackageSelection(\''+escapeHTML(p.id)+'\')">×</button></div>').join(''):'<p class="muted">Choose packages to build your quote.</p>';
     const early=document.getElementById('earlyBirdCheckbox')?.checked;
     const advance=early?500:0;
-    const ids={calcOriginalTotal:totals.regularTotal,calcTotalSavings:totals.savings,calcFinalTotal:totals.offerTotal};
+    const savings=window.BeautifyPricing.getSavings(totals.regularTotal,totals.offerTotal);
+    const ids={calcOriginalTotal:totals.regularTotal,calcTotalSavings:savings,calcFinalTotal:totals.offerTotal};
     Object.entries(ids).forEach(([id,n])=>{const el=document.getElementById(id);if(el)el.textContent=(id==='calcTotalSavings'?'- ':'')+formatINR(n);});
     const advanceEl=document.getElementById('advanceAmount'); if(advanceEl) advanceEl.textContent=formatINR(advance);
     const balance=document.getElementById('balanceAmount'); if(balance) balance.textContent=formatINR(Math.max(0,totals.offerTotal-advance));
@@ -290,6 +291,7 @@ function renderEditorView() {
 function syncStudioHeader() {
     const phone=document.getElementById('headerPhoneDisplay');if(phone)phone.textContent=appState.studio.displayPhone||'Book on WhatsApp';
     const loc=document.getElementById('topBarLocation');if(loc)loc.textContent=appState.studio.location;
+    const season=document.getElementById('seasonBadge');if(season)season.textContent=appState.studio.seasonBadge;
     const brand=document.querySelectorAll('[data-brand-name]');brand.forEach(el=>el.textContent=appState.studio.brandName);
     const link=document.getElementById('headerWhatsAppQuick');if(link)link.href='https://wa.me/'+String(appState.studio.whatsappPhone).replace(/\D/g,'');
 }
