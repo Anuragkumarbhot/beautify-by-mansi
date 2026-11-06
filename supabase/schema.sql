@@ -48,11 +48,6 @@ grant execute on function public.is_booking_admin() to authenticated;
 alter table public.booking_admins enable row level security;
 alter table public.bookings enable row level security;
 
-drop policy if exists "Admins can read booking admin list" on public.booking_admins;
-create policy "Admins can read booking admin list"
-on public.booking_admins for select to authenticated
-using (public.is_booking_admin());
-
 drop policy if exists "Public can submit booking requests" on public.bookings;
 create policy "Public can submit booking requests"
 on public.bookings for insert to anon, authenticated
@@ -86,10 +81,22 @@ using (public.is_booking_admin());
 
 grant insert on public.bookings to anon, authenticated;
 grant select, update, delete on public.bookings to authenticated;
-grant select on public.booking_admins to authenticated;
 
 -- Admin bootstrap:
 -- 1) Create Mansi's user in Supabase Authentication > Users.
 -- 2) Copy that user's UUID.
 -- 3) Run: insert into public.booking_admins (user_id) values ('PASTE-AUTH-USER-UUID-HERE');
 -- Never put a service_role key in this website.
+
+-- Publish booking changes to Supabase Realtime (safe to run more than once).
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public'
+      and tablename = 'bookings'
+  ) then
+    alter publication supabase_realtime add table public.bookings;
+  end if;
+end $$;
