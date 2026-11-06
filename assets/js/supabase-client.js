@@ -74,6 +74,13 @@ const cloud = {
   async deleteBooking(id) {
     const { error } = await client.from('bookings').delete().eq('id', id);
     if (error) throw error;
+  },
+  subscribeBookings(callback) {
+    if (!client) return () => {};
+    const channel = client.channel('beautify-booking-updates')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings' }, callback)
+      .subscribe();
+    return () => client.removeChannel(channel);
   }
 };
 
