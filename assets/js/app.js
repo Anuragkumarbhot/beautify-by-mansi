@@ -192,237 +192,113 @@ function persistState() {
     }
 }
 
-function formatINR(num) {
-    return '₹' + Number(num || 0).toLocaleString('en-IN');
-}
 
-// Switch between Booking, Pamphlet, and Editor views
+function formatINR(value) {
+    const amount = Number(value || 0);
+    return window.BeautifyPricing ? window.BeautifyPricing.formatINR(amount) :
+        '₹' + amount.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+}
+function escapeHTML(value) {
+    return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
 function switchAppMode(mode) {
-    const views = {
-        booking: document.getElementById('viewBooking'),
-        pamphlet: document.getElementById('viewPamphlet'),
-        editor: document.getElementById('viewEditor')
-    };
-    const buttons = {
-        booking: document.getElementById('modeBtnBooking'),
-        pamphlet: document.getElementById('modeBtnPamphlet'),
-        editor: document.getElementById('modeBtnEditor')
-    };
-
-    Object.keys(views).forEach(key => {
-        if (key === mode) {
-            views[key].classList.remove('hidden');
-            buttons[key].className = 'mode-tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 bg-gold text-maroon-dark shadow';
-        } else {
-            views[key].classList.add('hidden');
-            buttons[key].className = 'mode-tab-btn px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition flex items-center gap-2 text-ivory/85 hover:text-white hover:bg-white/10';
-        }
+    ['booking','pamphlet','editor'].forEach(key => {
+        const view=document.getElementById('view'+key[0].toUpperCase()+key.slice(1));
+        const btn=document.getElementById('modeBtn'+key[0].toUpperCase()+key.slice(1));
+        if(view) view.classList.toggle('hidden',key!==mode);
+        if(btn) btn.classList.toggle('active',key===mode);
     });
-
-    if (mode === 'pamphlet') renderPamphletView();
-    if (mode === 'editor') renderEditorView();
+    if(mode==='pamphlet') renderPamphletView();
+    if(mode==='editor') renderEditorView();
 }
-
-// Select Nail Shade
-function selectNailShade(shadeName) {
-    appState.selectedShade = shadeName;
-    persistState();
-
-    document.querySelectorAll('.nail-swatch-btn').forEach(btn => {
-        const isMatch = btn.getAttribute('data-shade') === shadeName;
-        const checkIcon = btn.querySelector('.swatch-check');
-        if (isMatch) {
-            btn.className = 'nail-swatch-btn group flex items-center gap-2 px-3 py-2 rounded-xl bg-white border-2 border-maroon shadow-sm transition text-xs font-semibold text-maroon-dark';
-            if (checkIcon) checkIcon.classList.remove('hidden');
-        } else {
-            btn.className = 'nail-swatch-btn group flex items-center gap-2 px-3 py-2 rounded-xl bg-white border border-gray-200 hover:border-rose-dusty shadow-sm transition text-xs font-semibold text-gray-700';
-            if (checkIcon) checkIcon.classList.add('hidden');
-        }
-    });
-
-    const shadeLabel = document.getElementById('selectedShadeLabel');
-    if (shadeLabel) shadeLabel.textContent = shadeName;
+function selectNailShade(shade) {
+    appState.selectedShade=shade; persistState();
+    document.querySelectorAll('.nail-swatch-btn').forEach(b=>b.classList.toggle('selected',b.dataset.shade===shade));
+    const el=document.getElementById('selectedShadeLabel'); if(el) el.textContent=shade;
 }
-
-// Filter by Category
 function filterCategory(cat) {
-    appState.activeCategory = cat;
-    document.querySelectorAll('.cat-tab-btn').forEach(btn => {
-        if (btn.getAttribute('data-cat') === cat) {
-            btn.className = 'cat-tab-btn shrink-0 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition bg-maroon text-gold-light shadow';
-        } else {
-            btn.className = 'cat-tab-btn shrink-0 px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-ivory-warm text-maroon-dark hover:bg-rose-light/60';
-        }
-    });
+    appState.activeCategory=cat;
+    document.querySelectorAll('.cat-tab-btn').forEach(b=>b.classList.toggle('active',b.dataset.cat===cat));
     renderPackagesList();
 }
-
-function handleSearchPackages(query) {
-    appState.searchQuery = (query || '').trim().toLowerCase();
-    renderPackagesList();
+function handleSearchPackages(q) { appState.searchQuery=String(q||'').trim().toLowerCase(); renderPackagesList(); }
+function togglePackageSelection(id) {
+    if(!appState.packages.some(p=>p.id===id)) return;
+    const i=appState.selectedPackageIds.indexOf(id);
+    if(i>=0) appState.selectedPackageIds.splice(i,1); else appState.selectedPackageIds.push(id);
+    persistState(); renderPackagesList(); updateCalculatorSummary();
 }
-
-function togglePackageSelection(pkgId) {
-    const idx = appState.selectedPackageIds.indexOf(pkgId);
-    if (idx > -1) {
-        appState.selectedPackageIds.splice(idx, 1);
-    } else {
-        appState.selectedPackageIds.push(pkgId);
-    }
-    persistState();
-    renderPackagesList();
-    updateCalculatorSummary();
-}
-
-function clearSelectedPackages() {
-    appState.selectedPackageIds = [];
-    persistState();
-    renderPackagesList();
-    updateCalculatorSummary();
-}
-
-// Render Left Column Package Cards
+function clearSelectedPackages() { appState.selectedPackageIds=[]; persistState(); renderPackagesList(); updateCalculatorSummary(); }
+function getSelectedPackages() { return appState.packages.filter(p=>appState.selectedPackageIds.includes(p.id)); }
 function renderPackagesList() {
-    const container = document.getElementById('packagesListContainer');
-    if (!container) return;
-
-    const filtered = appState.packages.filter(pkg => {
-        const matchesCat = appState.activeCategory === 'all' || pkg.category === appState.activeCategory;
-        const matchesQuery = !appState.searchQuery ||
-            pkg.name.toLowerCase().includes(appState.searchQuery) ||
-            pkg.description.toLowerCase().includes(appState.searchQuery) ||
-            pkg.features.some(f => f.toLowerCase().includes(appState.searchQuery));
-        return matchesCat && matchesQuery;
-    });
-
-    if (filtered.length === 0) {
-        container.innerHTML = `
-            <div class="bg-white rounded-2xl p-8 text-center border border-rose-dusty/30">
-                <p class="font-serif text-xl text-maroon-dark font-bold">No matching packages found</p>
-                <p class="text-xs text-gray-500 mt-1">Try clearing your search filter or switching to "All Festive Offers".</p>
-            </div>
-        `;
-        return;
-    }
-
-    const categoriesOrder = ['party', 'bridal', 'nails', 'combos'];
-    let html = '';
-
-    categoriesOrder.forEach(catKey => {
-        const groupItems = filtered.filter(item => item.category === catKey);
-        if (groupItems.length === 0) return;
-
-        html += `
-            <div class="space-y-4">
-                <div class="flex items-center justify-between border-b border-gold/40 pb-2">
-                    <h3 class="font-serif text-xl sm:text-2xl font-bold text-maroon-dark">${groupItems[0].categoryTitle}</h3>
-                    <span class="text-xs font-semibold text-maroon bg-rose-light px-2.5 py-1 rounded-full">${groupItems.length} Options</span>
-                </div>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    ${groupItems.map(pkg => {
-                        const isSelected = appState.selectedPackageIds.includes(pkg.id);
-                        const discountPercent = Math.round(((pkg.originalPrice - pkg.price) / pkg.originalPrice) * 100);
-                        return `
-                            <div onclick="togglePackageSelection('${pkg.id}')" class="card-hover cursor-pointer rounded-2xl p-5 bg-white transition relative flex flex-col justify-between ${isSelected ? 'border-2 border-maroon ring-2 ring-gold/40 bg-maroon-soft/20' : 'border border-rose-dusty/35'}">
-                                <div>
-                                    <div class="flex items-center justify-between gap-2 mb-2">
-                                        <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-ivory-warm text-maroon border border-gold/40">${pkg.badge}</span>
-                                        <span class="text-xs font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md">Save ${discountPercent}%</span>
-                                    </div>
-                                    <h4 class="font-serif text-lg font-bold text-maroon-dark leading-snug">${pkg.name}</h4>
-                                    <p class="text-xs text-gray-600 mt-1.5 leading-relaxed">${pkg.description}</p>
-                                    <ul class="mt-3 space-y-1">
-                                        ${pkg.features.map(f => `
-                                            <li class="text-xs text-gray-700 flex items-center gap-1.5">
-                                                <i class="fa-solid fa-check text-[10px] text-gold-dark"></i>
-                                                <span>${f}</span>
-                                            </li>
-                                        `).join('')}
-                                    </ul>
-                                </div>
-
-                                <div class="mt-5 pt-3 border-t border-gray-100 flex items-center justify-between">
-                                    <div>
-                                        <span class="text-xs text-gray-400 line-through block">${formatINR(pkg.originalPrice)}</span>
-                                        <span class="font-serif text-2xl font-extrabold text-maroon">${formatINR(pkg.price)}</span>
-                                    </div>
-                                    <button type="button" class="px-3.5 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${isSelected ? 'bg-maroon text-gold-light shadow' : 'bg-ivory-warm text-maroon-dark hover:bg-rose-light'}">
-                                        <i class="fa-solid ${isSelected ? 'fa-circle-check' : 'fa-plus'}"></i>
-                                        <span>${isSelected ? 'Selected' : 'Add to Booking'}</span>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('')}
-                </div>
-            </div>
-        `;
-    });
-
-    container.innerHTML = html;
+    const host=document.getElementById('packagesListContainer'); if(!host) return;
+    const q=appState.searchQuery;
+    const filtered=appState.packages.filter(p=>(appState.activeCategory==='all'||p.category===appState.activeCategory)&&
+        (!q||[p.name,p.description,...(p.features||[])].some(x=>String(x).toLowerCase().includes(q))));
+    if(!filtered.length) { host.innerHTML='<div class="empty-state">No matching packages. Try another search or category.</div>'; return; }
+    const cats=['party','bridal','nails','combos'];
+    host.innerHTML=cats.map(cat=>{
+        const items=filtered.filter(p=>p.category===cat); if(!items.length) return '';
+        return '<section class="package-group"><div class="group-heading"><h3>'+escapeHTML(items[0].categoryTitle)+'</h3><span>'+items.length+' options</span></div><div class="package-grid">'+items.map(p=>{
+            const selected=appState.selectedPackageIds.includes(p.id);
+            const discount=p.originalPrice>0?Math.max(0,Math.round((p.originalPrice-p.price)/p.originalPrice*100)):0;
+            return '<article class="package-card '+(selected?'is-selected':'')+'"><div class="package-top"><span class="package-badge">'+escapeHTML(p.badge)+'</span><span class="discount">Save '+discount+'%</span></div><h4>'+escapeHTML(p.name)+'</h4><p>'+escapeHTML(p.description)+'</p><ul>'+(p.features||[]).map(f=>'<li>✓ '+escapeHTML(f)+'</li>').join('')+'</ul><div class="package-bottom"><div><del>'+formatINR(p.originalPrice)+'</del><strong>'+formatINR(p.price)+'</strong></div><button class="btn '+(selected?'btn-dark':'btn-light')+'" type="button" onclick="togglePackageSelection(\''+escapeHTML(p.id)+'\')">'+(selected?'✓ Selected':'+ Add to booking')+'</button></div></article>';
+        }).join('')+'</div></section>';
+    }).join('');
 }
-
-// Update Sticky Booking Calculator
 function updateCalculatorSummary() {
-    const listEl = document.getElementById('selectedPackagesList');
-    const countEl = document.getElementById('selectedCountBadge');
-    const origEl = document.getElementById('calcOriginalTotal');
-    const saveEl = document.getElementById('calcTotalSavings');
-    const finalEl = document.getElementById('calcFinalTotal');
-
-    const selectedItems = appState.packages.filter(p => appState.selectedPackageIds.includes(p.id));
-    if (countEl) countEl.textContent = selectedItems.length;
-
-    if (selectedItems.length === 0) {
-        if (listEl) {
-            listEl.innerHTML = `
-                <div class="text-center py-4 px-3 rounded-xl bg-ivory text-xs text-gray-500 border border-dashed border-rose-dusty/40">
-                    Tap any package card on the left to build your festive quote.
-                </div>
-            `;
-        }
-        if (origEl) origEl.textContent = '₹0';
-        if (saveEl) saveEl.textContent = '- ₹0';
-        if (finalEl) finalEl.textContent = '₹0';
-        return;
-    }
-
-    let totalOffer = 0;
-    let totalRegular = 0;
-
-    if (listEl) {
-        listEl.innerHTML = selectedItems.map(item => {
-            totalOffer += Number(item.price);
-            totalRegular += Number(item.originalPrice);
-            return `
-                <div class="flex items-center justify-between gap-2 bg-ivory px-3 py-2 rounded-xl border border-gold/25 text-xs">
-                    <div class="truncate pr-2">
-                        <span class="font-semibold text-maroon-dark block truncate">${item.name}</span>
-                        <span class="text-[11px] text-gray-400 line-through">${formatINR(item.originalPrice)}</span>
-                    </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                        <span class="font-bold text-maroon">${formatINR(item.price)}</span>
-                        <button onclick="togglePackageSelection('${item.id}')" class="text-gray-400 hover:text-red-600">
-                            <i class="fa-solid fa-xmark"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
-        }).join('');
-    } else {
-        selectedItems.forEach(item => {
-            totalOffer += Number(item.price);
-            totalRegular += Number(item.originalPrice);
-        });
-    }
-
-    const savings = Math.max(0, totalRegular - totalOffer);
-    if (origEl) origEl.textContent = formatINR(totalRegular);
-    if (saveEl) saveEl.textContent = '- ' + formatINR(savings);
-    if (finalEl) finalEl.textContent = formatINR(totalOffer);
+    const selected=getSelectedPackages();
+    const totals=window.BeautifyPricing.calculateTotals(selected);
+    const list=document.getElementById('selectedPackagesList');
+    const count=document.getElementById('selectedCountBadge');
+    if(count) count.textContent=selected.length;
+    if(list) list.innerHTML=selected.length?selected.map(p=>'<div class="selected-row"><div><b>'+escapeHTML(p.name)+'</b><small><del>'+formatINR(p.originalPrice)+'</del></small></div><strong>'+formatINR(p.price)+'</strong><button aria-label="Remove '+escapeHTML(p.name)+'" onclick="togglePackageSelection(\''+escapeHTML(p.id)+'\')">×</button></div>').join(''):'<p class="muted">Choose packages to build your quote.</p>';
+    const early=document.getElementById('earlyBirdCheckbox')?.checked;
+    const advance=early?500:0;
+    const ids={calcOriginalTotal:totals.regularTotal,calcTotalSavings:totals.savings,calcFinalTotal:totals.offerTotal};
+    Object.entries(ids).forEach(([id,n])=>{const el=document.getElementById(id);if(el)el.textContent=(id==='calcTotalSavings'?'- ':'')+formatINR(n);});
+    const advanceEl=document.getElementById('advanceAmount'); if(advanceEl) advanceEl.textContent=formatINR(advance);
+    const balance=document.getElementById('balanceAmount'); if(balance) balance.textContent=formatINR(Math.max(0,totals.offerTotal-advance));
+    const countLabel=document.getElementById('quotePackageCount'); if(countLabel) countLabel.textContent=selected.length;
 }
-
-// Generate and open WhatsApp Booking Link
 function sendWhatsAppBooking() {
-    const selectedItems = appState.packages.filter(p => appState.selectedPackageIds.includes(p.id));
-    const clientName = (document.getElementById('clientNameInput')?.value || '').trim() || 'Festive Cl
+    const selected=getSelectedPackages();
+    if(!selected.length) { alert('Please select at least one service package.'); return; }
+    const name=(document.getElementById('clientNameInput')?.value||'').trim();
+    const phone=(document.getElementById('clientPhoneInput')?.value||'').trim();
+    const date=(document.getElementById('eventDateInput')?.value||'').trim();
+    const event=(document.getElementById('eventTypeInput')?.value||'').trim();
+    if(!name) { alert('Please enter your name before booking.'); document.getElementById('clientNameInput')?.focus(); return; }
+    const totals=window.BeautifyPricing.calculateTotals(selected);
+    const advance=document.getElementById('earlyBirdCheckbox')?.checked?500:0;
+    const lines=['Hello '+appState.studio.brandName+'! I would like to enquire about a booking.','Name: '+name,'Contact: '+(phone||'Not provided'),'Event: '+(event||'Not specified'),'Date: '+(date||'To be confirmed'),'Preferred nail style: '+appState.selectedShade,'','Selected services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(totals.savings),'Offer total: '+formatINR(totals.offerTotal),'Advance slot: '+formatINR(advance),'Balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'Please confirm availability and booking details.'];
+    const digits=String(appState.studio.whatsappPhone||'').replace(/\D/g,'');
+    if(digits.length<10||digits.length>15) { alert('The studio WhatsApp number is not valid. Please update it in Edit Prices & Phone Number.'); return; }
+    window.open('https://wa.me/'+digits+'?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener,noreferrer');
+}
+function renderPamphletView() {
+    const host=document.getElementById('pamphletContent'); if(!host)return;
+    host.innerHTML='<div class="pamphlet-head"><p>'+escapeHTML(appState.studio.seasonBadge)+'</p><h2>'+escapeHTML(appState.studio.brandName)+'</h2><p>'+escapeHTML(appState.studio.tagline)+'</p><small>'+escapeHTML(appState.studio.location)+' · '+escapeHTML(appState.studio.displayPhone)+'</small></div>'+
+    ['party','bridal','nails','combos'].map(cat=>{const items=appState.packages.filter(p=>p.category===cat);return items.length?'<section><h3>'+escapeHTML(items[0].categoryTitle)+'</h3>'+items.map(p=>'<div class="pamphlet-item"><span><b>'+escapeHTML(p.name)+'</b><small>'+escapeHTML(p.description)+'</small></span><strong>'+formatINR(p.price)+'</strong></div>').join('')+'</section>':'';}).join('');
+}
+function renderEditorView() {
+    const host=document.getElementById('editorContent'); if(!host)return;
+    host.innerHTML='<form id="studioEditorForm" class="editor-form"><h3>Studio details</h3><label>Brand name<input name="brandName" required maxlength="80" value="'+escapeHTML(appState.studio.brandName)+'"></label><label>Tagline<input name="tagline" maxlength="140" value="'+escapeHTML(appState.studio.tagline)+'"></label><label>WhatsApp number (country code + number)<input name="whatsappPhone" inputmode="numeric" required pattern="[0-9+ ]{10,18}" value="'+escapeHTML(appState.studio.whatsappPhone)+'"></label><label>Display phone<input name="displayPhone" value="'+escapeHTML(appState.studio.displayPhone)+'"></label><label>Location<input name="location" value="'+escapeHTML(appState.studio.location)+'"></label><label>Season banner<input name="seasonBadge" value="'+escapeHTML(appState.studio.seasonBadge)+'"></label><button class="btn btn-dark" type="submit">Save studio details</button></form><h3 class="editor-title">Package pricing</h3><div class="price-editor">'+appState.packages.map(p=>'<form class="price-form" data-id="'+escapeHTML(p.id)+'"><b>'+escapeHTML(p.name)+'</b><label>Offer price (₹)<input name="price" type="number" min="0" step="1" required value="'+Number(p.price)+'"></label><label>Regular price (₹)<input name="originalPrice" type="number" min="0" step="1" required value="'+Number(p.originalPrice)+'"></label><button class="btn btn-light" type="submit">Update price</button></form>').join('')+'</div><button class="btn btn-outline" type="button" onclick="resetAppData()">Reset all local edits to defaults</button>';
+    document.getElementById('studioEditorForm').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.currentTarget);for(const k of Object.keys(appState.studio))if(data.has(k))appState.studio[k]=String(data.get(k)).trim();persistState();syncStudioHeader();alert('Studio details saved on this device.');});
+    host.querySelectorAll('.price-form').forEach(form=>form.addEventListener('submit',e=>{e.preventDefault();const p=appState.packages.find(x=>x.id===form.dataset.id);if(!p)return;const data=new FormData(form);const price=Number(data.get('price')),regular=Number(data.get('originalPrice'));if(!Number.isFinite(price)||!Number.isFinite(regular)||price<0||regular<price){alert('Enter valid prices. Regular price must be at least the offer price.');return;}p.price=price;p.originalPrice=regular;persistState();renderPackagesList();updateCalculatorSummary();alert('Package pricing updated on this device.');}));
+}
+function syncStudioHeader() {
+    const phone=document.getElementById('headerPhoneDisplay');if(phone)phone.textContent=appState.studio.displayPhone||'Book on WhatsApp';
+    const loc=document.getElementById('topBarLocation');if(loc)loc.textContent=appState.studio.location;
+    const brand=document.querySelectorAll('[data-brand-name]');brand.forEach(el=>el.textContent=appState.studio.brandName);
+    const link=document.getElementById('headerWhatsAppQuick');if(link)link.href='https://wa.me/'+String(appState.studio.whatsappPhone).replace(/\D/g,'');
+}
+function resetAppData(){if(!confirm('Reset all package and studio edits stored on this device?'))return;localStorage.removeItem(STORAGE_KEY);appState=loadState();syncStudioHeader();renderPackagesList();updateCalculatorSummary();renderEditorView();}
+function copyInstagramCaption(){const caption='A little festive glam, a lot of confidence ✨ Book your look with '+appState.studio.brandName+' 💄💅';if(navigator.clipboard?.writeText)navigator.clipboard.writeText(caption).then(()=>alert('Caption copied.')).catch(()=>prompt('Copy your caption:',caption));else prompt('Copy your caption:',caption);}
+document.addEventListener('DOMContentLoaded',()=>{
+    syncStudioHeader();
+    document.querySelectorAll('.nail-swatch-btn').forEach(b=>b.classList.toggle('selected',b.dataset.shade===appState.selectedShade));
+    const shade=document.getElementById('selectedShadeLabel');if(shade)shade.textContent=appState.selectedShade;
+    const search=document.getElementById('packageSearch');if(search)search.addEventListener('input',e=>handleSearchPackages(e.target.value));
+    renderPackagesList();updateCalculatorSummary();
+});
