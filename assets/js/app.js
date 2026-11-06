@@ -267,13 +267,25 @@ function sendWhatsAppBooking() {
     if(!selected.length) { alert('Please select at least one service package.'); return; }
     const name=(document.getElementById('clientNameInput')?.value||'').trim();
     const phone=(document.getElementById('clientPhoneInput')?.value||'').trim();
+    const phoneDigits=phone.replace(/\\D/g,'');
     const date=(document.getElementById('eventDateInput')?.value||'').trim();
     const event=(document.getElementById('eventTypeInput')?.value||'').trim();
+    const time=(document.getElementById('eventTimeInput')?.value||'').trim();
+    const location=(document.getElementById('serviceLocationInput')?.value||'').trim();
+    const notes=(document.getElementById('bookingNotesInput')?.value||'').trim();
     if(!name) { alert('Please enter your name before booking.'); document.getElementById('clientNameInput')?.focus(); return; }
+    if(phoneDigits.length<10||phoneDigits.length>15) { alert('Please enter a valid contact number with 10 to 15 digits.'); document.getElementById('clientPhoneInput')?.focus(); return; }
+    if(!event) { alert('Please select or enter your event type.'); document.getElementById('eventTypeInput')?.focus(); return; }
+    if(!date) { alert('Please choose your event date.'); document.getElementById('eventDateInput')?.focus(); return; }
+    const today=new Date(); today.setHours(0,0,0,0);
+    const eventDay=new Date(date+'T00:00:00');
+    if(Number.isNaN(eventDay.getTime())||eventDay<today) { alert('Please choose today or a future event date.'); document.getElementById('eventDateInput')?.focus(); return; }
+    if(!time) { alert('Please choose a preferred time slot.'); document.getElementById('eventTimeInput')?.focus(); return; }
+    if(!location) { alert('Please choose the service location.'); document.getElementById('serviceLocationInput')?.focus(); return; }
     const totals=window.BeautifyPricing.calculateTotals(selected);
     const savings=window.BeautifyPricing.getSavings(totals.regularTotal,totals.offerTotal);
     const advance=document.getElementById('earlyBirdCheckbox')?.checked?500:0;
-    const lines=['Hello '+appState.studio.brandName+'! I would like to enquire about a booking.','Name: '+name,'Contact: '+(phone||'Not provided'),'Event: '+(event||'Not specified'),'Date: '+(date||'To be confirmed'),'Preferred nail style: '+appState.selectedShade,'','Selected services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Offer total: '+formatINR(totals.offerTotal),'Advance slot: '+formatINR(advance),'Balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'Please confirm availability and booking details.'];
+    const lines=['Hello '+appState.studio.brandName+'! I would like to request a booking.','Name: '+name,'Customer contact: '+phone,'Event: '+event,'Event date: '+date,'Preferred time: '+time,'Service location: '+location,'Preferred nail style: '+appState.selectedShade,'Additional notes: '+(notes||'None'),'','Requested services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Estimated offer total: '+formatINR(totals.offerTotal),'Indicative advance: '+formatINR(advance),'Indicative balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'','Please confirm slot availability, final pricing and payment instructions. This message is a booking request, not a confirmed appointment.'];
     const digits=String(appState.studio.whatsappPhone||'').replace(/\D/g,'');
     if(digits.length<10||digits.length>15) { alert('The studio WhatsApp number is not valid. Please update it in Edit Prices & Phone Number.'); return; }
     window.open('https://wa.me/'+digits+'?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener,noreferrer');
@@ -303,5 +315,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.querySelectorAll('.nail-swatch-btn').forEach(b=>b.classList.toggle('selected',b.dataset.shade===appState.selectedShade));
     const shade=document.getElementById('selectedShadeLabel');if(shade)shade.textContent=appState.selectedShade;
     const search=document.getElementById('packageSearch');if(search)search.addEventListener('input',e=>handleSearchPackages(e.target.value));
+    const dateInput=document.getElementById('eventDateInput');
+    if(dateInput){const now=new Date();const localToday=new Date(now.getTime()-now.getTimezoneOffset()*60000).toISOString().slice(0,10);dateInput.min=localToday;}
     renderPackagesList();updateCalculatorSummary();
 });
