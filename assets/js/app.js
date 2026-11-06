@@ -171,6 +171,7 @@ const DEFAULT_STATE = {
 let appState = loadState();
 let cloudAdminBookings = [];
 let cloudAdminSession = null;
+let cloudBookingsSubscription = null;
 
 function loadState() {
     try {
@@ -402,12 +403,13 @@ async function renderAdminDashboard() {
                 return;
             }
             cloudAdminBookings=(await window.BeautifyCloud.listBookings()).map(normalizeCloudBooking);
+            if(!cloudBookingsSubscription) cloudBookingsSubscription=window.BeautifyCloud.subscribeBookings(()=>{renderAdminDashboard();});
             const rows=cloudAdminBookings;
             const counts=['New','Contacted','Confirmed','Completed','Cancelled'].map(status=>({status,count:rows.filter(b=>b.status===status).length}));
             host.innerHTML='<div class="admin-actions"><p class="muted">Cloud database · signed in as '+escapeHTML(session.user.email||'administrator')+'</p><button class="btn btn-light" type="button" id="cloudSignOut">Sign out</button></div><div class="admin-summary">'+counts.map(x=>'<div class="admin-stat"><span>'+x.status+'</span><strong>'+x.count+'</strong></div>').join('')+'</div><div class="admin-actions"><p class="muted">'+rows.length+' booking record(s) in Supabase.</p><button class="btn btn-outline" type="button" onclick="exportBookingsCSV()">Export CSV</button></div>'+
             (rows.length?'<div class="admin-bookings">'+rows.map(b=>'<article class="admin-booking"><div class="admin-booking-head"><div><b>'+escapeHTML(b.name)+'</b><small>'+escapeHTML(b.id)+' · '+escapeHTML(new Date(b.createdAt).toLocaleString('en-IN'))+'</small></div><strong>'+formatINR(b.offerTotal)+'</strong></div><p>'+escapeHTML(b.event)+' · '+escapeHTML(b.date)+' · '+escapeHTML(b.time)+'</p><p>'+escapeHTML(b.phone)+' · '+escapeHTML(b.location)+'</p><p>'+escapeHTML((b.services||[]).map(x=>x.name).join(', '))+'</p>'+(b.notes?'<p class="muted">Notes: '+escapeHTML(b.notes)+'</p>':'')+'<div class="admin-booking-controls"><label>Status<select aria-label="Booking status" onchange="updateBookingStatus(\''+escapeHTML(b.id)+'\',this.value)">'+['New','Contacted','Confirmed','Completed','Cancelled'].map(st=>'<option'+(b.status===st?' selected':'')+'>'+st+'</option>').join('')+'</select></label><button class="btn btn-light" type="button" onclick="deleteBooking(\''+escapeHTML(b.id)+'\')">Delete</button></div></article>').join('')+'</div>':'<div class="empty-state">No cloud booking requests yet.</div>')+
             '<p class="muted admin-warning">Bookings are stored in Supabase. Only authenticated users added to the booking_admins allow-list can view or manage them.</p>';
-            document.getElementById('cloudSignOut')?.addEventListener('click',async()=>{try{await window.BeautifyCloud.signOut();await renderAdminDashboard();}catch(error){alert(error.message);}});
+            document.getElementById('cloudSignOut')?.addEventListener('click',async()=>{try{if(cloudBookingsSubscription){cloudBookingsSubscription();cloudBookingsSubscription=null;}await window.BeautifyCloud.signOut();await renderAdminDashboard();}catch(error){alert(error.message);}});
         } catch(error) {
             host.innerHTML='<p class="admin-warning" role="alert">Cloud dashboard could not load. Verify the Supabase URL/key, SQL schema and administrator allow-list. '+escapeHTML(error.message)+'</p>';
             console.error(error);
