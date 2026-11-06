@@ -271,8 +271,9 @@ function sendWhatsAppBooking() {
     const event=(document.getElementById('eventTypeInput')?.value||'').trim();
     if(!name) { alert('Please enter your name before booking.'); document.getElementById('clientNameInput')?.focus(); return; }
     const totals=window.BeautifyPricing.calculateTotals(selected);
+    const savings=window.BeautifyPricing.getSavings(totals.regularTotal,totals.offerTotal);
     const advance=document.getElementById('earlyBirdCheckbox')?.checked?500:0;
-    const lines=['Hello '+appState.studio.brandName+'! I would like to enquire about a booking.','Name: '+name,'Contact: '+(phone||'Not provided'),'Event: '+(event||'Not specified'),'Date: '+(date||'To be confirmed'),'Preferred nail style: '+appState.selectedShade,'','Selected services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(totals.savings),'Offer total: '+formatINR(totals.offerTotal),'Advance slot: '+formatINR(advance),'Balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'Please confirm availability and booking details.'];
+    const lines=['Hello '+appState.studio.brandName+'! I would like to enquire about a booking.','Name: '+name,'Contact: '+(phone||'Not provided'),'Event: '+(event||'Not specified'),'Date: '+(date||'To be confirmed'),'Preferred nail style: '+appState.selectedShade,'','Selected services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Offer total: '+formatINR(totals.offerTotal),'Advance slot: '+formatINR(advance),'Balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'Please confirm availability and booking details.'];
     const digits=String(appState.studio.whatsappPhone||'').replace(/\D/g,'');
     if(digits.length<10||digits.length>15) { alert('The studio WhatsApp number is not valid. Please update it in Edit Prices & Phone Number.'); return; }
     window.open('https://wa.me/'+digits+'?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener,noreferrer');
