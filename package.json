@@ -1,0 +1,12 @@
+{
+  "name": "beautify-by-mansi",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Beautify by Mansi booking, pricing and beauty services web app",
+  "scripts": {
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
