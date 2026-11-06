@@ -169,6 +169,8 @@ const DEFAULT_STATE = {
 };
 
 let appState = loadState();
+let cloudAdminBookings = [];
+let cloudAdminSession = null;
 
 function loadState() {
     try {
@@ -264,7 +266,7 @@ function updateCalculatorSummary() {
     const balance=document.getElementById('balanceAmount'); if(balance) balance.textContent=formatINR(Math.max(0,totals.offerTotal-advance));
     const countLabel=document.getElementById('quotePackageCount'); if(countLabel) countLabel.textContent=selected.length;
 }
-function sendWhatsAppBooking() {
+async function sendWhatsAppBooking() {
     const selected=getSelectedPackages();
     if(!selected.length) { alert('Please select at least one service package.'); return; }
     const name=(document.getElementById('clientNameInput')?.value||'').trim();
@@ -302,9 +304,22 @@ function sendWhatsAppBooking() {
         balance:Math.max(0,totals.offerTotal-advance),
         status:'New'
     };
-    appState.bookings=Array.isArray(appState.bookings)?appState.bookings:[];
-    appState.bookings.unshift(booking);
-    persistState();
+    if (window.BeautifyCloud?.configured) {
+        try {
+            const saved = await window.BeautifyCloud.createBooking(booking);
+            booking.id = saved.id;
+            booking.createdAt = saved.created_at;
+            booking.status = saved.status;
+        } catch (error) {
+            console.error('Cloud booking failed:', error);
+            alert('Your booking could not be saved to the cloud. Please try again or contact the studio directly. No booking was recorded.');
+            return;
+        }
+    } else {
+        appState.bookings=Array.isArray(appState.bookings)?appState.bookings:[];
+        appState.bookings.unshift(booking);
+        persistState();
+    }
     const lines=['Hello '+appState.studio.brandName+'! I would like to request a booking.','Booking reference: '+booking.id,'Name: '+name,'Customer contact: '+phone,'Event: '+event,'Event date: '+date,'Preferred time: '+time,'Service location: '+location,'Preferred nail style: '+appState.selectedShade,'Additional notes: '+(notes||'None'),'','Requested services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Estimated offer total: '+formatINR(totals.offerTotal),'Indicative advance: '+formatINR(advance),'Indicative balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'','Please confirm slot availability, final pricing and payment instructions. This message is a booking request, not a confirmed appointment.'];
     window.open('https://wa.me/'+digits+'?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener,noreferrer');
 }
@@ -319,35 +334,92 @@ function renderEditorView() {
     document.getElementById('studioEditorForm').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.currentTarget);for(const k of Object.keys(appState.studio))if(data.has(k))appState.studio[k]=String(data.get(k)).trim();persistState();syncStudioHeader();alert('Studio details saved on this device.');});
     host.querySelectorAll('.price-form').forEach(form=>form.addEventListener('submit',e=>{e.preventDefault();const p=appState.packages.find(x=>x.id===form.dataset.id);if(!p)return;const data=new FormData(form);const price=Number(data.get('price')),regular=Number(data.get('originalPrice'));if(!Number.isFinite(price)||!Number.isFinite(regular)||price<0||regular<price){alert('Enter valid prices. Regular price must be at least the offer price.');return;}p.price=price;p.originalPrice=regular;persistState();renderPackagesList();updateCalculatorSummary();alert('Package pricing updated on this device.');}));
 }
-function updateBookingStatus(id,status) {
+function normalizeCloudBooking(row) {
+    return {
+        id: row.id,
+        createdAt: row.created_at,
+        name: row.customer_name,
+        phone: row.customer_phone,
+        event: row.event_type,
+        date: row.event_date,
+        time: row.preferred_time,
+        location: row.service_location,
+        notes: row.notes,
+        shade: row.nail_style,
+        services: row.services || [],
+        regularTotal: row.regular_total,
+        savings: row.savings,
+        offerTotal: row.offer_total,
+        advance: row.advance,
+        balance: row.balance,
+        status: row.status
+    };
+}
+async function updateBookingStatus(id,status) {
     const allowed=['New','Contacted','Confirmed','Completed','Cancelled'];
     if(!allowed.includes(status))return;
+    if(window.BeautifyCloud?.configured) {
+        try { await window.BeautifyCloud.updateBooking(id,status); await renderAdminDashboard(); }
+        catch(error) { alert('Could not update booking: '+error.message); }
+        return;
+    }
     const booking=(appState.bookings||[]).find(b=>b.id===id);
     if(!booking)return;
     booking.status=status;persistState();renderAdminDashboard();
 }
-function deleteBooking(id) {
-    if(!confirm('Delete this booking record from this device?'))return;
+async function deleteBooking(id) {
+    if(!confirm('Delete this booking record? This cannot be undone.'))return;
+    if(window.BeautifyCloud?.configured) {
+        try { await window.BeautifyCloud.deleteBooking(id); await renderAdminDashboard(); }
+        catch(error) { alert('Could not delete booking: '+error.message); }
+        return;
+    }
     appState.bookings=(appState.bookings||[]).filter(b=>b.id!==id);
     persistState();renderAdminDashboard();
 }
 function exportBookingsCSV() {
-    const rows=appState.bookings||[];
+    const rows=window.BeautifyCloud?.configured?cloudAdminBookings:(appState.bookings||[]);
     if(!rows.length){alert('There are no booking records to export.');return;}
     const cols=['id','createdAt','name','phone','event','date','time','location','services','offerTotal','status','notes'];
     const cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-    const csv=[cols.join(','),...rows.map(b=>cols.map(k=>cell(k==='services'?(b.services||[]).map(x=>x.name).join(' | '):b[k])).join(','))].join('\r\n');
+    const csv=[cols.join(','),...rows.map(b=>cols.map(k=>cell(k==='services'?(b.services||[]).map(x=>x.name).join(' | '):b[k])).join(','))].join('\\r\\n');
     const blob=new Blob(['\\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='beautify-bookings.csv';a.click();URL.revokeObjectURL(url);
 }
-function renderAdminDashboard() {
+async function renderAdminDashboard() {
     const host=document.getElementById('adminDashboardContent');if(!host)return;
+    if(window.BeautifyCloud?.configured) {
+        try {
+            const session=await window.BeautifyCloud.getSession();
+            cloudAdminSession=session;
+            if(!session) {
+                host.innerHTML='<div class="cloud-login"><h3>Studio administrator sign in</h3><p class="muted">Sign in with the administrator account created in Supabase Authentication.</p><form id="cloudAdminLogin" class="editor-form"><label>Admin email<input name="email" type="email" autocomplete="username" required></label><label>Password<input name="password" type="password" autocomplete="current-password" required></label><button class="btn btn-dark" type="submit">Sign in securely</button><p id="cloudLoginError" class="muted" role="alert"></p></form></div>';
+                document.getElementById('cloudAdminLogin')?.addEventListener('submit',async e=>{
+                    e.preventDefault();const data=new FormData(e.currentTarget);const button=e.currentTarget.querySelector('button');button.disabled=true;button.textContent='Signing in…';
+                    try { await window.BeautifyCloud.signIn(String(data.get('email')).trim(),String(data.get('password'))); await renderAdminDashboard(); }
+                    catch(error) { const errorHost=document.getElementById('cloudLoginError');if(errorHost)errorHost.textContent='Sign-in failed. Check the email/password and confirm this account is listed in booking_admins.';button.disabled=false;button.textContent='Sign in securely';console.error(error); }
+                });
+                return;
+            }
+            cloudAdminBookings=(await window.BeautifyCloud.listBookings()).map(normalizeCloudBooking);
+            const rows=cloudAdminBookings;
+            const counts=['New','Contacted','Confirmed','Completed','Cancelled'].map(status=>({status,count:rows.filter(b=>b.status===status).length}));
+            host.innerHTML='<div class="admin-actions"><p class="muted">Cloud database · signed in as '+escapeHTML(session.user.email||'administrator')+'</p><button class="btn btn-light" type="button" id="cloudSignOut">Sign out</button></div><div class="admin-summary">'+counts.map(x=>'<div class="admin-stat"><span>'+x.status+'</span><strong>'+x.count+'</strong></div>').join('')+'</div><div class="admin-actions"><p class="muted">'+rows.length+' booking record(s) in Supabase.</p><button class="btn btn-outline" type="button" onclick="exportBookingsCSV()">Export CSV</button></div>'+
+            (rows.length?'<div class="admin-bookings">'+rows.map(b=>'<article class="admin-booking"><div class="admin-booking-head"><div><b>'+escapeHTML(b.name)+'</b><small>'+escapeHTML(b.id)+' · '+escapeHTML(new Date(b.createdAt).toLocaleString('en-IN'))+'</small></div><strong>'+formatINR(b.offerTotal)+'</strong></div><p>'+escapeHTML(b.event)+' · '+escapeHTML(b.date)+' · '+escapeHTML(b.time)+'</p><p>'+escapeHTML(b.phone)+' · '+escapeHTML(b.location)+'</p><p>'+escapeHTML((b.services||[]).map(x=>x.name).join(', '))+'</p>'+(b.notes?'<p class="muted">Notes: '+escapeHTML(b.notes)+'</p>':'')+'<div class="admin-booking-controls"><label>Status<select aria-label="Booking status" onchange="updateBookingStatus(\''+escapeHTML(b.id)+'\',this.value)">'+['New','Contacted','Confirmed','Completed','Cancelled'].map(st=>'<option'+(b.status===st?' selected':'')+'>'+st+'</option>').join('')+'</select></label><button class="btn btn-light" type="button" onclick="deleteBooking(\''+escapeHTML(b.id)+'\')">Delete</button></div></article>').join('')+'</div>':'<div class="empty-state">No cloud booking requests yet.</div>')+
+            '<p class="muted admin-warning">Bookings are stored in Supabase. Only authenticated users added to the booking_admins allow-list can view or manage them.</p>';
+            document.getElementById('cloudSignOut')?.addEventListener('click',async()=>{try{await window.BeautifyCloud.signOut();await renderAdminDashboard();}catch(error){alert(error.message);}});
+        } catch(error) {
+            host.innerHTML='<p class="admin-warning" role="alert">Cloud dashboard could not load. Verify the Supabase URL/key, SQL schema and administrator allow-list. '+escapeHTML(error.message)+'</p>';
+            console.error(error);
+        }
+        return;
+    }
     const rows=Array.isArray(appState.bookings)?appState.bookings:[];
     const counts=['New','Contacted','Confirmed','Completed','Cancelled'].map(status=>({status,count:rows.filter(b=>b.status===status).length}));
     host.innerHTML='<div class="admin-summary">'+counts.map(x=>'<div class="admin-stat"><span>'+x.status+'</span><strong>'+x.count+'</strong></div>').join('')+'</div>'+
     '<div class="admin-actions"><p class="muted">'+rows.length+' booking record(s) saved in this browser only.</p><button class="btn btn-outline" type="button" onclick="exportBookingsCSV()">Export CSV</button></div>'+
-    (rows.length?'<div class="admin-bookings">'+rows.map(b=>'<article class="admin-booking"><div class="admin-booking-head"><div><b>'+escapeHTML(b.name)+'</b><small>'+escapeHTML(b.id)+' · '+escapeHTML(new Date(b.createdAt).toLocaleString('en-IN'))+'</small></div><strong>'+formatINR(b.offerTotal)+'</strong></div><p>'+escapeHTML(b.event)+' · '+escapeHTML(b.date)+' · '+escapeHTML(b.time)+'</p><p>'+escapeHTML(b.phone)+' · '+escapeHTML(b.location)+'</p><p>'+escapeHTML((b.services||[]).map(x=>x.name).join(', '))+'</p>'+(b.notes?'<p class="muted">Notes: '+escapeHTML(b.notes)+'</p>':'')+'<div class="admin-booking-controls"><label>Status<select aria-label="Booking status" onchange="updateBookingStatus(\''+escapeHTML(b.id)+'\',this.value)">'+['New','Contacted','Confirmed','Completed','Cancelled'].map(st=>'<option'+(b.status===st?' selected':'')+'>'+st+'</option>').join('')+'</select></label><button class="btn btn-light" type="button" onclick="deleteBooking(\''+escapeHTML(b.id)+'\')">Delete</button></div></article>').join('')+'</div>':'<div class="empty-state">No booking enquiries saved yet. Customer booking requests will appear here when submitted from this browser.</div>')+
-    '<p class="muted admin-warning">Privacy and storage: records are stored only in this browser/device. They are not synced to Mansi’s other devices or received automatically from WhatsApp. Export the CSV regularly and protect this device.</p>';
+    (rows.length?'<div class="admin-bookings">'+rows.map(b=>'<article class="admin-booking"><div class="admin-booking-head"><div><b>'+escapeHTML(b.name)+'</b><small>'+escapeHTML(b.id)+' · '+escapeHTML(new Date(b.createdAt).toLocaleString('en-IN'))+'</small></div><strong>'+formatINR(b.offerTotal)+'</strong></div><p>'+escapeHTML(b.event)+' · '+escapeHTML(b.date)+' · '+escapeHTML(b.time)+'</p><p>'+escapeHTML(b.phone)+' · '+escapeHTML(b.location)+'</p><p>'+escapeHTML((b.services||[]).map(x=>x.name).join(', '))+'</p>'+(b.notes?'<p class="muted">Notes: '+escapeHTML(b.notes)+'</p>':'')+'<div class="admin-booking-controls"><label>Status<select aria-label="Booking status" onchange="updateBookingStatus(\''+escapeHTML(b.id)+'\',this.value)">'+['New','Contacted','Confirmed','Completed','Cancelled'].map(st=>'<option'+(b.status===st?' selected':'')+'>'+st+'</option>').join('')+'</select></label><button class="btn btn-light" type="button" onclick="deleteBooking(\''+escapeHTML(b.id)+'\')">Delete</button></div></article>').join('')+'</div>':'<div class="empty-state">No booking enquiries saved yet.</div>')+
+    '<p class="muted admin-warning">Local-only fallback is active. Configure Supabase to sync bookings across devices.</p>';
 }
 function syncStudioHeader() {
     const phone=document.getElementById('headerPhoneDisplay');if(phone)phone.textContent=appState.studio.displayPhone||'Book on WhatsApp';
