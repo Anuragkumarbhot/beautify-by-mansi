@@ -13,6 +13,7 @@ const DEFAULT_STATE = {
     selectedPackageIds: ['party-hd', 'nails-presson'],
     activeCategory: 'all',
     searchQuery: '',
+    bookings: [],
     packages: [
         // 1. FESTIVE & PARTY MAKEUP (4)
         {
@@ -202,7 +203,7 @@ function escapeHTML(value) {
     return String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
 function switchAppMode(mode) {
-    ['booking','pamphlet','editor'].forEach(key => {
+    ['booking','pamphlet','editor','admin'].forEach(key => {
         const view=document.getElementById('view'+key[0].toUpperCase()+key.slice(1));
         const btn=document.getElementById('modeBtn'+key[0].toUpperCase()+key.slice(1));
         if(view) view.classList.toggle('hidden',key!==mode);
@@ -210,6 +211,7 @@ function switchAppMode(mode) {
     });
     if(mode==='pamphlet') renderPamphletView();
     if(mode==='editor') renderEditorView();
+    if(mode==='admin') renderAdminDashboard();
 }
 function selectNailShade(shade) {
     appState.selectedShade=shade; persistState();
@@ -267,7 +269,7 @@ function sendWhatsAppBooking() {
     if(!selected.length) { alert('Please select at least one service package.'); return; }
     const name=(document.getElementById('clientNameInput')?.value||'').trim();
     const phone=(document.getElementById('clientPhoneInput')?.value||'').trim();
-    const phoneDigits=phone.replace(/\\D/g,'');
+    const phoneDigits=phone.replace(/\D/g,'');
     const date=(document.getElementById('eventDateInput')?.value||'').trim();
     const event=(document.getElementById('eventTypeInput')?.value||'').trim();
     const time=(document.getElementById('eventTimeInput')?.value||'').trim();
@@ -285,7 +287,23 @@ function sendWhatsAppBooking() {
     const totals=window.BeautifyPricing.calculateTotals(selected);
     const savings=window.BeautifyPricing.getSavings(totals.regularTotal,totals.offerTotal);
     const advance=document.getElementById('earlyBirdCheckbox')?.checked?500:0;
-    const lines=['Hello '+appState.studio.brandName+'! I would like to request a booking.','Name: '+name,'Customer contact: '+phone,'Event: '+event,'Event date: '+date,'Preferred time: '+time,'Service location: '+location,'Preferred nail style: '+appState.selectedShade,'Additional notes: '+(notes||'None'),'','Requested services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Estimated offer total: '+formatINR(totals.offerTotal),'Indicative advance: '+formatINR(advance),'Indicative balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'','Please confirm slot availability, final pricing and payment instructions. This message is a booking request, not a confirmed appointment.'];
+    const booking={
+        id:'BM-'+Date.now(),
+        createdAt:new Date().toISOString(),
+        name,phone,event,date,time,location,notes,
+        shade:appState.selectedShade,
+        services:selected.map(p=>({name:p.name,price:Number(p.price)})),
+        regularTotal:totals.regularTotal,
+        savings,
+        offerTotal:totals.offerTotal,
+        advance,
+        balance:Math.max(0,totals.offerTotal-advance),
+        status:'New'
+    };
+    appState.bookings=Array.isArray(appState.bookings)?appState.bookings:[];
+    appState.bookings.unshift(booking);
+    persistState();
+    const lines=['Hello '+appState.studio.brandName+'! I would like to request a booking.','Booking reference: '+booking.id,'Name: '+name,'Customer contact: '+phone,'Event: '+event,'Event date: '+date,'Preferred time: '+time,'Service location: '+location,'Preferred nail style: '+appState.selectedShade,'Additional notes: '+(notes||'None'),'','Requested services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Estimated offer total: '+formatINR(totals.offerTotal),'Indicative advance: '+formatINR(advance),'Indicative balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'','Please confirm slot availability, final pricing and payment instructions. This message is a booking request, not a confirmed appointment.'];
     const digits=String(appState.studio.whatsappPhone||'').replace(/\D/g,'');
     if(digits.length<10||digits.length>15) { alert('The studio WhatsApp number is not valid. Please update it in Edit Prices & Phone Number.'); return; }
     window.open('https://wa.me/'+digits+'?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener,noreferrer');
@@ -300,6 +318,36 @@ function renderEditorView() {
     host.innerHTML='<form id="studioEditorForm" class="editor-form"><h3>Studio details</h3><label>Brand name<input name="brandName" required maxlength="80" value="'+escapeHTML(appState.studio.brandName)+'"></label><label>Tagline<input name="tagline" maxlength="140" value="'+escapeHTML(appState.studio.tagline)+'"></label><label>WhatsApp number (country code + number)<input name="whatsappPhone" inputmode="numeric" required pattern="[0-9+ ]{10,18}" value="'+escapeHTML(appState.studio.whatsappPhone)+'"></label><label>Display phone<input name="displayPhone" value="'+escapeHTML(appState.studio.displayPhone)+'"></label><label>Location<input name="location" value="'+escapeHTML(appState.studio.location)+'"></label><label>Season banner<input name="seasonBadge" value="'+escapeHTML(appState.studio.seasonBadge)+'"></label><button class="btn btn-dark" type="submit">Save studio details</button></form><h3 class="editor-title">Package pricing</h3><div class="price-editor">'+appState.packages.map(p=>'<form class="price-form" data-id="'+escapeHTML(p.id)+'"><b>'+escapeHTML(p.name)+'</b><label>Offer price (₹)<input name="price" type="number" min="0" step="1" required value="'+Number(p.price)+'"></label><label>Regular price (₹)<input name="originalPrice" type="number" min="0" step="1" required value="'+Number(p.originalPrice)+'"></label><button class="btn btn-light" type="submit">Update price</button></form>').join('')+'</div><button class="btn btn-outline" type="button" onclick="resetAppData()">Reset all local edits to defaults</button>';
     document.getElementById('studioEditorForm').addEventListener('submit',e=>{e.preventDefault();const data=new FormData(e.currentTarget);for(const k of Object.keys(appState.studio))if(data.has(k))appState.studio[k]=String(data.get(k)).trim();persistState();syncStudioHeader();alert('Studio details saved on this device.');});
     host.querySelectorAll('.price-form').forEach(form=>form.addEventListener('submit',e=>{e.preventDefault();const p=appState.packages.find(x=>x.id===form.dataset.id);if(!p)return;const data=new FormData(form);const price=Number(data.get('price')),regular=Number(data.get('originalPrice'));if(!Number.isFinite(price)||!Number.isFinite(regular)||price<0||regular<price){alert('Enter valid prices. Regular price must be at least the offer price.');return;}p.price=price;p.originalPrice=regular;persistState();renderPackagesList();updateCalculatorSummary();alert('Package pricing updated on this device.');}));
+}
+function updateBookingStatus(id,status) {
+    const allowed=['New','Contacted','Confirmed','Completed','Cancelled'];
+    if(!allowed.includes(status))return;
+    const booking=(appState.bookings||[]).find(b=>b.id===id);
+    if(!booking)return;
+    booking.status=status;persistState();renderAdminDashboard();
+}
+function deleteBooking(id) {
+    if(!confirm('Delete this booking record from this device?'))return;
+    appState.bookings=(appState.bookings||[]).filter(b=>b.id!==id);
+    persistState();renderAdminDashboard();
+}
+function exportBookingsCSV() {
+    const rows=appState.bookings||[];
+    if(!rows.length){alert('There are no booking records to export.');return;}
+    const cols=['id','createdAt','name','phone','event','date','time','location','services','offerTotal','status','notes'];
+    const cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
+    const csv=[cols.join(','),...rows.map(b=>cols.map(k=>cell(k==='services'?(b.services||[]).map(x=>x.name).join(' | '):b[k])).join(','))].join('\r\n');
+    const blob=new Blob(['\\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='beautify-bookings.csv';a.click();URL.revokeObjectURL(url);
+}
+function renderAdminDashboard() {
+    const host=document.getElementById('adminDashboardContent');if(!host)return;
+    const rows=Array.isArray(appState.bookings)?appState.bookings:[];
+    const counts=['New','Contacted','Confirmed','Completed','Cancelled'].map(status=>({status,count:rows.filter(b=>b.status===status).length}));
+    host.innerHTML='<div class="admin-summary">'+counts.map(x=>'<div class="admin-stat"><span>'+x.status+'</span><strong>'+x.count+'</strong></div>').join('')+'</div>'+
+    '<div class="admin-actions"><p class="muted">'+rows.length+' booking record(s) saved in this browser only.</p><button class="btn btn-outline" type="button" onclick="exportBookingsCSV()">Export CSV</button></div>'+
+    (rows.length?'<div class="admin-bookings">'+rows.map(b=>'<article class="admin-booking"><div class="admin-booking-head"><div><b>'+escapeHTML(b.name)+'</b><small>'+escapeHTML(b.id)+' · '+escapeHTML(new Date(b.createdAt).toLocaleString('en-IN'))+'</small></div><strong>'+formatINR(b.offerTotal)+'</strong></div><p>'+escapeHTML(b.event)+' · '+escapeHTML(b.date)+' · '+escapeHTML(b.time)+'</p><p>'+escapeHTML(b.phone)+' · '+escapeHTML(b.location)+'</p><p>'+escapeHTML((b.services||[]).map(x=>x.name).join(', '))+'</p>'+(b.notes?'<p class="muted">Notes: '+escapeHTML(b.notes)+'</p>':'')+'<div class="admin-booking-controls"><label>Status<select aria-label="Booking status" onchange="updateBookingStatus(\''+escapeHTML(b.id)+'\',this.value)">'+['New','Contacted','Confirmed','Completed','Cancelled'].map(st=>'<option'+(b.status===st?' selected':'')+'>'+st+'</option>').join('')+'</select></label><button class="btn btn-light" type="button" onclick="deleteBooking(\''+escapeHTML(b.id)+'\')">Delete</button></div></article>').join('')+'</div>':'<div class="empty-state">No booking enquiries saved yet. Customer booking requests will appear here when submitted from this browser.</div>')+
+    '<p class="muted admin-warning">Privacy and storage: records are stored only in this browser/device. They are not synced to Mansi’s other devices or received automatically from WhatsApp. Export the CSV regularly and protect this device.</p>';
 }
 function syncStudioHeader() {
     const phone=document.getElementById('headerPhoneDisplay');if(phone)phone.textContent=appState.studio.displayPhone||'Book on WhatsApp';
