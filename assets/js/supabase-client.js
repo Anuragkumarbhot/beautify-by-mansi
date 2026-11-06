@@ -39,6 +39,7 @@ const cloud = {
   async createBooking(booking) {
     if (!client) throw new Error('Cloud booking is not configured.');
     const row = {
+      id: crypto.randomUUID(),
       customer_name: booking.name,
       customer_phone: booking.phone,
       event_type: booking.event,
@@ -55,9 +56,10 @@ const cloud = {
       balance: booking.balance,
       status: 'New'
     };
-    const { data, error } = await client.from('bookings').insert(row).select('id,created_at,status').single();
+    const { error } = await client.from('bookings').insert(row);
     if (error) throw error;
-    return data;
+    // Public users are intentionally denied SELECT; keep the client-generated reference.
+    return { id: row.id, created_at: new Date().toISOString(), status: 'New' };
   },
   async listBookings() {
     if (!client) throw new Error('Cloud booking is not configured.');
