@@ -287,6 +287,8 @@ function sendWhatsAppBooking() {
     const totals=window.BeautifyPricing.calculateTotals(selected);
     const savings=window.BeautifyPricing.getSavings(totals.regularTotal,totals.offerTotal);
     const advance=document.getElementById('earlyBirdCheckbox')?.checked?500:0;
+    const digits=String(appState.studio.whatsappPhone||'').replace(/\D/g,'');
+    if(digits.length<10||digits.length>15) { alert('The studio WhatsApp number is not valid. Please update it in Edit Prices & Phone Number.'); return; }
     const booking={
         id:'BM-'+Date.now(),
         createdAt:new Date().toISOString(),
@@ -304,8 +306,6 @@ function sendWhatsAppBooking() {
     appState.bookings.unshift(booking);
     persistState();
     const lines=['Hello '+appState.studio.brandName+'! I would like to request a booking.','Booking reference: '+booking.id,'Name: '+name,'Customer contact: '+phone,'Event: '+event,'Event date: '+date,'Preferred time: '+time,'Service location: '+location,'Preferred nail style: '+appState.selectedShade,'Additional notes: '+(notes||'None'),'','Requested services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Estimated offer total: '+formatINR(totals.offerTotal),'Indicative advance: '+formatINR(advance),'Indicative balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'','Please confirm slot availability, final pricing and payment instructions. This message is a booking request, not a confirmed appointment.'];
-    const digits=String(appState.studio.whatsappPhone||'').replace(/\D/g,'');
-    if(digits.length<10||digits.length>15) { alert('The studio WhatsApp number is not valid. Please update it in Edit Prices & Phone Number.'); return; }
     window.open('https://wa.me/'+digits+'?text='+encodeURIComponent(lines.join('\n')),'_blank','noopener,noreferrer');
 }
 function renderPamphletView() {
