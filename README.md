@@ -30,3 +30,7 @@ beautify-by-mansi/
 └── .github/
     └── workflows/
         └── deploy.yml          # GitHub Pages CI/CD deployment workflow
+
+
+## GitHub Pages deployment
+The site is deployed from the repository root by the GitHub Actions workflow at `.github/workflows/deploy.yml`. In the repository, open **Settings → Pages** and set **Build and deployment → Source** to **GitHub Actions**. Then open **Actions → Deploy Beautify by Mansi to GitHub Pages** and run the workflow (or push a commit to `main`). The public site URL is `https://anuragkumarbhot.github.io/beautify-by-mansi/` once the deployment succeeds.
