@@ -180,7 +180,7 @@ function loadState() {
         const parsed = JSON.parse(raw);
         const savedStudio = { ...DEFAULT_STATE.studio, ...(parsed.studio || {}) };
         // Migrate the previous default studio WhatsApp number to the owner-provided number.
-        if (String(savedStudio.whatsappPhone).replace(/\\D/g, '') === '919876543210') {
+        if (String(savedStudio.whatsappPhone).replace(/\D/g, '') === '919876543210') {
             savedStudio.whatsappPhone = DEFAULT_STATE.studio.whatsappPhone;
             savedStudio.displayPhone = DEFAULT_STATE.studio.displayPhone;
         }
