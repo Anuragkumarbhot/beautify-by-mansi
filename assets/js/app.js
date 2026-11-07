@@ -4,8 +4,8 @@ const DEFAULT_STATE = {
     studio: {
         brandName: 'Beautify by Mansi',
         tagline: 'Makeup • Hair • Nail Extensions • Festive Glam',
-        whatsappPhone: '919876543210',
-        displayPhone: '+91 98765 43210',
+        whatsappPhone: '919877339755',
+        displayPhone: '+91 98773 39755',
         location: 'Studio & Venue Service Available',
         seasonBadge: 'Karwa Chauth • Diwali • Wedding Season Special Offers'
     },
@@ -178,10 +178,16 @@ function loadState() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return JSON.parse(JSON.stringify(DEFAULT_STATE));
         const parsed = JSON.parse(raw);
+        const savedStudio = { ...DEFAULT_STATE.studio, ...(parsed.studio || {}) };
+        // Migrate the previous default studio WhatsApp number to the owner-provided number.
+        if (String(savedStudio.whatsappPhone).replace(/\\D/g, '') === '919876543210') {
+            savedStudio.whatsappPhone = DEFAULT_STATE.studio.whatsappPhone;
+            savedStudio.displayPhone = DEFAULT_STATE.studio.displayPhone;
+        }
         return {
             ...JSON.parse(JSON.stringify(DEFAULT_STATE)),
             ...parsed,
-            studio: { ...DEFAULT_STATE.studio, ...(parsed.studio || {}) }
+            studio: savedStudio
         };
     } catch (e) {
         return JSON.parse(JSON.stringify(DEFAULT_STATE));
