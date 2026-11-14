@@ -21,8 +21,18 @@
 <section class="layout">
 <div class="panel editor-panel">
 <h2>Build your business identity</h2><p class="hint">Enter your public business details. Your preview updates as you type. Do not enter passwords, payment details or other sensitive information.</p>
+<div class="panel" id="cloudAccount" style="margin-bottom:18px">
+<h2>Cloud account</h2><p class="hint">Sign in to save a hosted business profile. Your profile is private until you publish it.</p>
+<div class="fields">
+<label class="field">Email<input id="cloudEmail" type="email" autocomplete="email" required placeholder="you@example.com"></label>
+<label class="field">Password<input id="cloudPassword" type="password" autocomplete="current-password" minlength="8" required placeholder="At least 8 characters"></label>
+</div>
+<div class="actions"><button class="btn" type="button" id="cloudSignIn">Sign in</button><button class="btn secondary" type="button" id="cloudSignUp">Create account</button><button class="btn secondary" type="button" id="cloudSignOut" hidden>Sign out</button></div>
+<div class="status" id="cloudStatus" role="status">Not signed in. Cloud publishing requires a verified account.</div>
+</div>
 <form id="builder">
 <div class="fields">
+<label class="field full">Public profile URL slug<input id="slug" maxlength="48" pattern="[a-z0-9-]+" value="beautify-by-mansi" placeholder="your-business-name"><span style="font-size:10px;color:#796c72;font-weight:400">Your public link will end in profile.html?slug=your-business-name</span></label>
 <label class="field">Business / brand name<input id="name" maxlength="70" value="Beautify by Mansi" required></label>
 <label class="field">Owner / professional name<input id="owner" maxlength="60" value="Mansi"></label>
 <label class="field">Profession / category<input id="category" maxlength="70" value="Makeup Artist · Nail Technician"></label>
@@ -34,7 +44,7 @@
 <label class="field">City / service area<input id="city" maxlength="80" value="Ludhiana · Chandigarh, Punjab"></label>
 <label class="field">Card theme<select id="theme"><option value="wine">Rose gold luxe</option><option value="ivory">Ivory & champagne</option><option value="plum">Deep plum</option></select></label>
 </div>
-<div class="actions"><button class="btn" type="submit">Save profile on this device</button><button class="btn secondary" type="button" id="reset">Reset preview</button></div><div class="status" id="status" role="status"></div>
+<div class="actions"><button class="btn" type="submit">Save profile on this device</button><button class="btn secondary" type="button" id="reset">Reset preview</button></div><div class="actions"><button class="btn gold" type="button" id="cloudSave">Save profile to cloud</button><button class="btn secondary" type="button" id="cloudPublish">Publish public profile</button><a class="btn secondary" id="publicProfileLink" href="#" target="_blank" rel="noopener" hidden>Open public profile</a></div><div class="status" id="cloudSaveStatus" role="status"></div><div class="status" id="status" role="status"></div>
 </form>
 <div class="note"><b>Prototype storage:</b> profile data is saved only in this browser using local storage. This MVP does not yet create customer accounts, publish individual hosted profile URLs, or sync data between devices.</div>
 </div>
@@ -53,6 +63,7 @@
 </div></section>
 </main>
 <footer class="footer">Beautify by Mansi · Luxury beauty and business identity tools · Ludhiana & Chandigarh</footer>
+<script type="module" src="assets/js/business-studio-cloud.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const fields=['name','owner','category','phone','bio','instagram','website','review','city','theme'];
