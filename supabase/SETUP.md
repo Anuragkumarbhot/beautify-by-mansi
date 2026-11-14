@@ -102,3 +102,24 @@ Configure the Razorpay webhook URL to the deployed `razorpay-webhook` function U
 - The current plan table is seeded with illustrative prices. Confirm the commercial pricing and tax/invoice treatment before accepting real payments.
 - This implementation does not yet handle recurring mandates, cancellations, refunds, chargebacks, GST invoices, or entitlement enforcement in the profile renderer. Do not market auto-renewing subscriptions until those systems are implemented.
 - Keep Edge Function JWT verification enabled for `create-order`. The Razorpay webhook is provider-authenticated by its HMAC signature, so configure that endpoint to accept provider requests without a Supabase user JWT while retaining signature verification in the function.
+
+
+## 9. Paid access, renewals and expiry enforcement (migration 004)
+1. Apply `supabase/migrations/004_subscription_entitlements.sql` after migration 003.
+2. Redeploy the updated `razorpay-webhook` function:
+   ```bash
+   supabase functions deploy razorpay-webhook --no-verify-jwt
+   ```
+3. Public profile reads now require a published profile **and** a paid subscription whose `starts_at` is in the past and `ends_at` is in the future. Owners can still read their own profile rows after expiry so they can renew or edit them.
+4. The webhook calls a restricted database function to activate a verified order. Renewal time is appended to the latest existing paid expiry for that profile, so buying early does not discard remaining paid days.
+5. Failed orders do not grant access. Expired payments remain in payment history but no longer satisfy the public profile policy.
+
+### Entitlement checks
+- Test a published profile with no paid subscription: signed-out public read must return no row.
+- Test a paid profile: public profile should load until `ends_at`.
+- Set a test subscription's `ends_at` to a past timestamp in SQL Editor: public read must stop while its owner can still read it.
+- Test a second successful payment before the first period ends: its `starts_at` should equal the prior paid `ends_at`.
+- Send duplicate captured webhook events and verify only one subscription activation occurs.
+- Send an invalid signature and a mismatched amount; neither may activate access.
+
+This enforces profile visibility at the database RLS layer, not merely in browser JavaScript. It does not yet gate individual Studio tools, staff seats, analytics quotas or custom domains. It also does not implement automatic recurring collection: customers must manually purchase a renewal.
