@@ -70,4 +70,7 @@ create policy "Owners can delete their own business profiles"
 on public.business_profiles for delete to authenticated
 using (owner_id = (select auth.uid()));
 
+grant select on public.business_profiles to anon, authenticated;
+grant insert, update, delete on public.business_profiles to authenticated;
+
 -- No anonymous writes. Never expose the Supabase service_role key in browser code.
