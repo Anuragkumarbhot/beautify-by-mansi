@@ -5,6 +5,8 @@ const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 const $ = (id) => document.getElementById(id);
 let currentProfileId = null;
 let isPublished = false;
+let ownedProfiles = [];
+let workspaceEntitlements = null;
 
 function setStatus(id, message, isError = false) {
   const node = $(id);
@@ -72,35 +74,87 @@ async function refreshFeatureAccess(profileId) {
   applyFeatureAccess(data);
   return data;
 }
-async function loadOwnProfile(user) {
-  const { data, error } = await supabase.from("business_profiles")
-    .select("*").eq("owner_id", user.id).order("created_at", { ascending: true }).limit(1).maybeSingle();
-  if (error) throw error;
-  if (!data) {
-    currentProfileId = null;
-    isPublished = false;
-    applyFeatureAccess(null);
-    return;
-  }
-  currentProfileId = data.id;
-  isPublished = data.is_published;
+function emitProfileChanged(profile) {
+  window.dispatchEvent(new CustomEvent("bm:active-profile-changed", { detail: { profile } }));
+}
+function setEditorProfile(data) {
+  currentProfileId = data?.id || null;
+  isPublished = !!data?.is_published;
   const map = { slug: "slug", name: "business_name", owner: "owner_name", category: "category",
     bio: "bio", phone: "phone", city: "city", website: "website_url",
     instagram: "instagram_url", review: "google_review_url" };
   Object.entries(map).forEach(([input, column]) => {
-    if ($(input) && typeof data[column] === "string") $(input).value = data[column];
+    if ($(input)) $(input).value = typeof data?.[column] === "string" ? data[column] : "";
   });
-  $("theme").value = data.theme === "rose-gold" ? "wine" : data.theme;
-  $("publicProfileLink").hidden = !data.is_published;
-  $("publicProfileLink").href = publicUrl(data.slug);
+  if ($("theme")) $("theme").value = !data ? "wine" : (data.theme === "rose-gold" ? "wine" : data.theme);
+  $("publicProfileLink").hidden = !data?.is_published;
+  $("publicProfileLink").href = data?.slug ? publicUrl(data.slug) : "#";
   $("publicProfileLink").textContent = "Open public profile";
-  if (data.is_published) {
-    $("qr").src = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(publicUrl(data.slug));
-    $("qrCaption").textContent = publicUrl(data.slug);
+  if (data?.is_published) {
+    const url = publicUrl(data.slug);
+    $("qr").src = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(url);
+    $("qrCaption").textContent = url;
   }
-  await refreshFeatureAccess(data.id);
-  ["name","category","bio","phone","city","website","instagram","review","theme"].forEach(id => $(id)?.dispatchEvent(new Event("input", { bubbles: true })));
-  setStatus("cloudSaveStatus", data.is_published ? "Cloud profile loaded and published." : "Cloud draft loaded.");
+  ["name","category","bio","phone","city","website","instagram","review","theme"].forEach(id =>
+    $(id)?.dispatchEvent(new Event("input", { bubbles: true })));
+  emitProfileChanged(data || null);
+}
+async function selectProfile(profileId) {
+  const data = ownedProfiles.find(item => item.id === profileId) || null;
+  setEditorProfile(data);
+  if (data) {
+    await refreshFeatureAccess(data.id);
+    setStatus("cloudSaveStatus", data.is_published ? "Cloud profile loaded and published." : "Cloud draft loaded.");
+  } else {
+    applyFeatureAccess(null);
+    setStatus("cloudSaveStatus", "New profile draft. Save it to your cloud workspace.");
+  }
+}
+async function refreshWorkspace(user) {
+  const { data, error } = await supabase.from("business_profiles")
+    .select("id,slug,business_name,owner_name,category,bio,phone,city,website_url,instagram_url,google_review_url,theme,is_published,created_at")
+    .eq("owner_id", user.id).order("created_at", { ascending: true });
+  if (error) throw error;
+  ownedProfiles = data || [];
+  const selector = $("profileSelector");
+  if (selector) {
+    selector.replaceChildren();
+    ownedProfiles.forEach(profile => {
+      const option = document.createElement("option");
+      option.value = profile.id;
+      option.textContent = profile.business_name + (profile.is_published ? " · Published" : " · Draft");
+      selector.append(option);
+    });
+  }
+  const { data: limits, error: limitError } = await supabase.rpc("get_business_workspace_entitlements");
+  if (limitError) throw limitError;
+  workspaceEntitlements = limits;
+  const count = limits?.profile_count ?? ownedProfiles.length;
+  const limit = limits?.profile_limit ?? 1;
+  setStatus("profileWorkspaceStatus",
+    count + " of " + limit + " profiles used · " + (limits?.plan_tier === "pro" ? "Pro workspace" : "Starter workspace"));
+  const createButton = $("newBusinessProfile");
+  if (createButton) {
+    createButton.disabled = !limits?.can_create_profile;
+    createButton.title = limits?.can_create_profile ? "Create a separate business identity" : "Upgrade to Pro to add more profiles";
+  }
+  const selected = ownedProfiles.find(item => item.id === currentProfileId) || ownedProfiles[0] || null;
+  if (selected) {
+    if (selector) selector.value = selected.id;
+    await selectProfile(selected.id);
+  } else {
+    if (selector) {
+      const option = document.createElement("option");
+      option.value = "";
+      option.textContent = "No saved profiles yet";
+      selector.append(option);
+    }
+    setEditorProfile(null);
+    applyFeatureAccess(null);
+  }
+}
+async function loadOwnProfile(user) {
+  await refreshWorkspace(user);
 }
 async function getUser() {
   const { data, error } = await supabase.auth.getUser();
@@ -134,6 +188,7 @@ async function saveCloud(publish) {
   if (error) throw error;
   currentProfileId = data.id;
   isPublished = data.is_published;
+  await refreshWorkspace(user);
   await refreshFeatureAccess(data.id);
   if (data.is_published) {
     const url = publicUrl(data.slug);
@@ -146,6 +201,39 @@ async function saveCloud(publish) {
     setStatus("cloudSaveStatus", "Cloud draft saved privately. Publish when ready.");
   }
 }
+$("profileSelector")?.addEventListener("change", async (event) => {
+  const nextId = event.target.value;
+  if (currentProfileId && nextId !== currentProfileId &&
+      !window.confirm("Switch profiles? Save any unsaved edits first.")) {
+    event.target.value = currentProfileId;
+    return;
+  }
+  try { await selectProfile(nextId); }
+  catch (e) { setStatus("profileWorkspaceStatus", e.message, true); }
+});
+$("newBusinessProfile")?.addEventListener("click", () => {
+  if (workspaceEntitlements && !workspaceEntitlements.can_create_profile) {
+    setStatus("profileWorkspaceStatus", "Your profile limit is reached. Upgrade to Pro for up to five business profiles.", true);
+    return;
+  }
+  if (currentProfileId && !window.confirm("Create a new profile? Save any unsaved edits first.")) return;
+  const selector = $("profileSelector");
+  if (selector) selector.value = "";
+  setEditorProfile(null);
+  applyFeatureAccess(null);
+  $("name").value = "";
+  $("owner").value = "";
+  $("category").value = "";
+  $("bio").value = "";
+  $("phone").value = "";
+  $("city").value = "";
+  $("website").value = "";
+  $("instagram").value = "";
+  $("review").value = "";
+  $("slug").value = "";
+  $("theme").value = "wine";
+  setStatus("cloudSaveStatus", "New profile draft. Add its details and save to cloud.");
+});
 $("cloudSignIn").addEventListener("click", async () => {
   setStatus("cloudStatus", "Signing in…");
   const { error } = await supabase.auth.signInWithPassword({
@@ -164,7 +252,7 @@ $("cloudSignUp").addEventListener("click", async () => {
 $("cloudSignOut").addEventListener("click", async () => {
   const { error } = await supabase.auth.signOut();
   if (error) setStatus("cloudStatus", error.message, true);
-  else { currentProfileId = null; isPublished = false; applyFeatureAccess(null); setStatus("cloudSaveStatus", "Signed out."); }
+  else { currentProfileId = null; isPublished = false; ownedProfiles = []; workspaceEntitlements = null; if ($("profileSelector")) $("profileSelector").replaceChildren(); applyFeatureAccess(null); emitProfileChanged(null); setStatus("cloudSaveStatus", "Signed out."); }
 });
 $("cloudSave").addEventListener("click", async () => {
   setStatus("cloudSaveStatus", "Saving cloud profile…");
