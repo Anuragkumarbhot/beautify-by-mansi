@@ -14,7 +14,7 @@ Never place a `service_role` key, database password, JWT signing secret, Razorpa
 2. Open **SQL Editor**.
 3. Run the complete file `supabase/migrations/001_business_profiles.sql`.
 4. Confirm that `public.business_profiles` exists and RLS is enabled.
-5. Confirm the policies exist for public published-profile reads and owner-only writes.
+5. Confirm RLS is enabled and owner-only write policies exist. After migration 005, anonymous visitors retrieve profile data through the plan-aware RPC rather than direct table SELECT.
 
 The migration is designed to be re-runnable. It creates a profile table with a unique URL slug, profile fields, publication state, timestamp trigger, and RLS policies.
 
@@ -25,7 +25,7 @@ The migration is designed to be re-runnable. It creates a profile table with a u
 4. Create a test account from **Business Studio** using an email you control.
 5. Confirm the email, then sign in.
 
-The current Business Studio has email/password sign-up and sign-in controls. Each signed-in account can manage only its own rows. Public visitors can read only published profiles.
+The current Business Studio has email/password sign-up and sign-in controls. Each signed-in account can manage only its own rows. Public visitors can retrieve only published profiles with an active paid subscription, through the sanitized public-profile RPC added in migration 005.
 
 ## 4. Publish a business profile
 1. Open `business-studio.html` on the deployed website.
@@ -52,7 +52,7 @@ The existing `supabase/schema.sql` file contains the appointment booking tables 
 - Review Supabase backups, quotas and monitoring for the selected plan.
 
 ## Current implementation boundary
-Cloud authentication, private draft saving, publication and public profile rendering are implemented in the frontend code, subject to applying the migration and configuring Supabase Auth. This work has been committed but not live-tested against the Supabase project. Razorpay subscriptions, QR scan analytics, custom domains, team accounts and admin moderation remain future work.
+Cloud authentication, private draft saving, public profile rendering, Razorpay one-time checkout, webhook activation, paid-access expiry and plan-based feature enforcement are implemented in the repository, subject to applying migrations 001–005 and deploying the Edge Functions. This work has not been live-tested against the configured Supabase/Razorpay projects. QR scan analytics, custom domains, multi-profile accounts, team accounts and admin moderation remain future work.
 
 
 ## 7. Platform admin dashboard
@@ -97,10 +97,10 @@ Set secrets in Supabase Edge Function secrets (never in GitHub or browser JavaSc
 Configure the Razorpay webhook URL to the deployed `razorpay-webhook` function URL and subscribe to `payment.captured` and `payment.failed`. Copy the webhook secret into the function secret configuration. Use Razorpay test mode first.
 
 ### Important launch requirements
-- The frontend checkout widget and post-payment signature UX are not yet connected. Do not treat an order response as proof of payment; only the verified webhook updates a subscription to paid.
+- The Business Studio checkout widget launches Razorpay Checkout. A browser checkout callback is not proof of payment; only the verified webhook activates a subscription. The interface remains pending until the verified server-side status is visible.
 - The webhook implementation must be tested with Razorpay test-mode events, invalid signatures, duplicate deliveries, amount mismatches, and database failures before launch.
 - The current plan table is seeded with illustrative prices. Confirm the commercial pricing and tax/invoice treatment before accepting real payments.
-- This implementation does not yet handle recurring mandates, cancellations, refunds, chargebacks, GST invoices, or entitlement enforcement in the profile renderer. Do not market auto-renewing subscriptions until those systems are implemented.
+- This implementation does not yet handle recurring mandates, cancellations, refunds, chargebacks or GST invoices. Paid access and plan-based feature filtering are implemented in migrations 004–005, but must be tested in the configured environment. Do not market auto-renewing subscriptions; customers currently purchase renewals manually.
 - Keep Edge Function JWT verification enabled for `create-order`. The Razorpay webhook is provider-authenticated by its HMAC signature, so configure that endpoint to accept provider requests without a Supabase user JWT while retaining signature verification in the function.
 
 
@@ -112,7 +112,7 @@ Configure the Razorpay webhook URL to the deployed `razorpay-webhook` function U
    ```
 3. Public profile reads now require a published profile **and** a paid subscription whose `starts_at` is in the past and `ends_at` is in the future. Owners can still read their own profile rows after expiry so they can renew or edit them.
 4. The webhook calls a restricted database function to activate a verified order. Renewal time is appended to the latest existing paid expiry for that profile, so buying early does not discard remaining paid days.
-5. Failed orders do not grant access. Expired payments remain in payment history but no longer satisfy the public profile policy.
+5. Failed orders do not grant access. Expired payments remain in payment history but no longer satisfy the public profile delivery function or the public-profile entitlement check.
 
 ### Entitlement checks
 - Test a published profile with no paid subscription: signed-out public read must return no row.
