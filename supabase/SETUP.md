@@ -1,33 +1,55 @@
 # Supabase setup — Beautify by Mansi
 
-## 1. Create the project
-1. Create a project at https://supabase.com/dashboard.
-2. In Project Settings → API, copy the Project URL and the publishable/anon key.
-3. Replace the two placeholders in `assets/js/supabase-config.js`.
-4. Never use the `service_role` or any secret key in browser code or GitHub.
+This project has two separate Supabase data areas:
+- `bookings`: existing appointment requests and studio booking administration.
+- `business_profiles`: hosted digital business cards for the hybrid Business Studio.
 
-## 2. Create tables and security policies
-1. Open Supabase → SQL Editor.
-2. Paste and run the complete `supabase/schema.sql` file.
-3. Confirm the `bookings` table has Row Level Security enabled.
+## 1. Project configuration
+A public browser configuration file already exists at `assets/js/supabase-config.js`. It contains the Supabase project URL and publishable key. A publishable/anon key is designed to be visible in browser code; Row Level Security (RLS) is the security boundary.
 
-The policies allow the public website to INSERT a new booking request only. Only a user explicitly listed in `booking_admins` can read, update, or delete booking records.
+Never place a `service_role` key, database password, JWT signing secret, Razorpay secret or webhook secret in HTML, JavaScript, GitHub, or any public deployment setting.
 
-## 3. Create Mansi's admin account
-1. In Authentication → Users, create an account for the studio administrator with an email and a strong unique password.
-2. Copy the user's UUID.
-3. In SQL Editor, run the bootstrap INSERT at the bottom of `schema.sql`, replacing the placeholder UUID with the real UUID.
-4. Keep public sign-ups disabled unless there is a deliberate need for them. Do not add customers to `booking_admins`.
+## 2. Apply the business-profile migration
+1. Open the Supabase dashboard for the project configured in `assets/js/supabase-config.js`.
+2. Open **SQL Editor**.
+3. Run the complete file `supabase/migrations/001_business_profiles.sql`.
+4. Confirm that `public.business_profiles` exists and RLS is enabled.
+5. Confirm the policies exist for public published-profile reads and owner-only writes.
 
-## 4. Deploy and verify
-1. Commit the Supabase URL and publishable/anon key in `supabase-config.js` (these are public client values; RLS is the security boundary).
-2. Push to `main`; the GitHub Pages workflow will publish the static site.
-3. Submit a test booking and confirm it appears in the Supabase `bookings` table.
-4. Sign in to Booking Manager and confirm the admin can view and update it.
-5. Test as a signed-out visitor: booking INSERT should work, but SELECT/UPDATE/DELETE must be denied.
+The migration is designed to be re-runnable. It creates a profile table with a unique URL slug, profile fields, publication state, timestamp trigger, and RLS policies.
 
-## Data and privacy notes
-- Customer details are personal data. Restrict admin access, use a strong unique password, and follow applicable privacy requirements.
-- Supabase free/paid quotas and project pausing policies can change; review your dashboard's current plan before relying on it for business-critical operations.
-- Public booking INSERT is intentionally enabled. Consider adding CAPTCHA/edge-function rate limiting before promoting the site widely to reduce spam.
-- WhatsApp is still a separate handoff: the website creates the cloud record, then opens WhatsApp for the customer to send the message. WhatsApp replies are not automatically imported.
+## 3. Authentication
+1. In Supabase **Authentication → Providers**, enable Email.
+2. Configure the production site URL and redirect URLs under **Authentication → URL Configuration**.
+3. Keep email confirmation enabled for production.
+4. Create a test account from **Business Studio** using an email you control.
+5. Confirm the email, then sign in.
+
+The current Business Studio has email/password sign-up and sign-in controls. Each signed-in account can manage only its own rows. Public visitors can read only published profiles.
+
+## 4. Publish a business profile
+1. Open `business-studio.html` on the deployed website.
+2. Create an account or sign in.
+3. Complete the business details and choose a URL slug.
+4. Select **Save profile to cloud** to store a private draft.
+5. Select **Publish public profile** to make the card publicly readable.
+6. Open the generated public link and test it in a signed-out/private browser.
+7. The QR code switches to the hosted profile URL after publishing.
+
+Public profile format: `profile.html?slug=your-business-name`.
+
+## 5. Existing booking system
+The existing `supabase/schema.sql` file contains the appointment booking tables and admin policies. It is separate from the new business-profile migration. Follow the booking-specific bootstrap instructions at the bottom of that schema when configuring booking administration.
+
+## 6. Security verification before launch
+- Test with two different accounts: account A must not read or change account B's draft.
+- Test signed out: an unpublished profile must not be readable; a published profile should be readable.
+- Test malformed slugs and URL fields.
+- Confirm no service-role or secret key exists in the frontend bundle or repository.
+- Configure password recovery and email-confirmation redirects.
+- Add rate limiting / CAPTCHA before opening sign-up broadly.
+- Establish privacy, account deletion and data export procedures.
+- Review Supabase backups, quotas and monitoring for the selected plan.
+
+## Current implementation boundary
+Cloud authentication, private draft saving, publication and public profile rendering are implemented in the frontend code, subject to applying the migration and configuring Supabase Auth. This work has been committed but not live-tested against the Supabase project. Razorpay subscriptions, QR scan analytics, custom domains, team accounts and admin moderation remain future work.
