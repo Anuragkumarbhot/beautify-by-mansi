@@ -61,6 +61,9 @@ begin
     return new;
   end if;
 
+  -- Serialize profile creation per account so concurrent requests cannot exceed the limit.
+  perform pg_advisory_xact_lock(hashtextextended(new.owner_id::text, 0));
+
   select count(*)::integer into v_count
   from public.business_profiles bp
   where bp.owner_id = new.owner_id;
@@ -75,7 +78,7 @@ begin
     and s.starts_at <= now()
     and s.ends_at > now();
 
-  if v_count >= case when v_pro then 5 else 1 end then
+  if v_count >= (case when v_pro then 5 else 1 end) then
     raise exception 'Your current plan profile limit has been reached. Upgrade to Pro to manage up to five business profiles.';
   end if;
 
