@@ -56,6 +56,15 @@
 <div class="panel" style="margin-top:15px;text-align:center"><h2 style="font:600 25px 'Cormorant Garamond';color:var(--wine);margin:0">Matching brand stamp</h2><div class="stamp" id="stamp"><small>✦ Official business ✦</small><b id="stampName">Beautify by Mansi</b><small id="stampCategory">Makeup · Nails</small><em id="stampCity">Ludhiana · Chandigarh</em></div><button class="btn secondary" type="button" onclick="window.print()">Print card & stamp</button></div>
 </aside>
 </section>
+<section class="panel" id="billing" style="margin:0 0 28px">
+<h2>Choose a Studio plan</h2>
+<p class="hint">Secure one-time checkout for hosted business-profile access. Select a plan after signing in and saving your business profile to the cloud. Payment is activated only after Razorpay verifies it through the server webhook.</p>
+<div id="billingPlans" class="plans" style="margin-bottom:14px"><p class="hint">Loading available plans…</p></div>
+<div class="actions"><button class="btn" type="button" id="refreshBilling">Refresh payment status</button></div>
+<div class="status" id="billingStatus" role="status" aria-live="polite">Sign in and save your business profile to view checkout options.</div>
+<div id="subscriptionHistory" style="margin-top:14px;font-size:12px;color:var(--muted)"></div>
+<div class="note">Checkout uses a server-created Razorpay order. A successful checkout window is not proof of payment; your account remains pending until the verified webhook updates the subscription. Plans currently do not auto-renew.</div>
+</section>
 <section id="plans"><div class="kicker">Platform roadmap</div><h2 style="font:600 34px 'Cormorant Garamond';color:var(--wine);margin:8px 0 16px">A clear path from profile to platform</h2><div class="plans">
 <article class="plan"><h3>Starter</h3><strong>Free prototype</strong><p>Digital card preview, contact links, QR destination and printable stamp. Local browser save.</p></article>
 <article class="plan"><h3>Studio</h3><strong>Planned</strong><p>Hosted public profile, custom themes, account login, cloud sync and review QR management.</p></article>
@@ -63,7 +72,7 @@
 </div></section>
 </main>
 <footer class="footer">Beautify by Mansi · Luxury beauty and business identity tools · Ludhiana & Chandigarh</footer>
-<script type="module" src="assets/js/business-studio-cloud.js"></script>
+<script type="module" src="assets/js/business-studio-cloud.js"></script>\n<script type="module" src="assets/js/subscription-checkout.js"></script>
 <script>
 const $=id=>document.getElementById(id);
 const fields=['name','owner','category','phone','bio','instagram','website','review','city','theme'];
