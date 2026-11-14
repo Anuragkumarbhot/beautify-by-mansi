@@ -71,3 +71,34 @@ The read-only SaaS operations dashboard is available at `admin.html`. It lists b
 Admin membership cannot be created or changed from the browser. The migration adds a narrowly scoped RLS policy that lets platform admins read business profile rows; owners retain their existing ownership policies. Do not expose the Supabase service-role key. Remove an admin by deleting their row from `public.platform_admins` in the SQL Editor.
 
 The dashboard currently fetches at most 500 profiles and reports only records returned by that query. It does not claim to report QR scans, revenue, or subscription status. Razorpay billing and event analytics require server-side functions and verified webhook processing, which are not included in this phase.
+
+
+## 8. Razorpay plan checkout foundation
+This phase adds server-side order creation and webhook-driven payment status updates. The included plans are fixed INR one-time payments with time-limited access; they are **not auto-renewing recurring subscriptions**.
+
+### Database
+1. Apply `supabase/migrations/003_billing_foundation.sql` after migrations 001 and 002.
+2. Review the seeded prices in `subscription_plans` before enabling checkout. Amounts are stored in paise (₹199 = 19900 paise).
+3. Browser users can read active plan names and their own subscription rows. All payment/subscription writes are intended to happen from trusted Edge Functions.
+
+### Deploy Edge Functions
+Deploy these functions using the Supabase CLI:
+- `create-order` — requires a valid Supabase user JWT, verifies profile ownership, reads the plan price from the database, and creates a Razorpay order server-side.
+- `razorpay-webhook` — verifies the raw request body against the Razorpay webhook HMAC signature and records supported payment events idempotently.
+
+Set secrets in Supabase Edge Function secrets (never in GitHub or browser JavaScript):
+- `SUPABASE_URL`
+- `SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY`
+- `RAZORPAY_KEY_ID`
+- `RAZORPAY_KEY_SECRET`
+- `RAZORPAY_WEBHOOK_SECRET`
+
+Configure the Razorpay webhook URL to the deployed `razorpay-webhook` function URL and subscribe to `payment.captured` and `payment.failed`. Copy the webhook secret into the function secret configuration. Use Razorpay test mode first.
+
+### Important launch requirements
+- The frontend checkout widget and post-payment signature UX are not yet connected. Do not treat an order response as proof of payment; only the verified webhook updates a subscription to paid.
+- The webhook implementation must be tested with Razorpay test-mode events, invalid signatures, duplicate deliveries, amount mismatches, and database failures before launch.
+- The current plan table is seeded with illustrative prices. Confirm the commercial pricing and tax/invoice treatment before accepting real payments.
+- This implementation does not yet handle recurring mandates, cancellations, refunds, chargebacks, GST invoices, or entitlement enforcement in the profile renderer. Do not market auto-renewing subscriptions until those systems are implemented.
+- Keep Edge Function JWT verification enabled for `create-order`. The Razorpay webhook is provider-authenticated by its HMAC signature, so configure that endpoint to accept provider requests without a Supabase user JWT while retaining signature verification in the function.
