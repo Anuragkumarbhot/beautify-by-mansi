@@ -67,20 +67,33 @@ $$;
 revoke all on function public.activate_customer_subscription(text,text,integer,text) from public, anon, authenticated;
 grant execute on function public.activate_customer_subscription(text,text,integer,text) to service_role;
 
+create or replace function public.has_active_profile_subscription(p_profile_id uuid)
+returns boolean
+language sql
+stable
+security definer
+set search_path = ''
+as $
+  select exists (
+    select 1
+    from public.customer_subscriptions s
+    where s.profile_id = p_profile_id
+      and s.status = 'paid'
+      and s.starts_at <= now()
+      and s.ends_at > now()
+  );
+$;
+
+revoke all on function public.has_active_profile_subscription(uuid) from public;
+grant execute on function public.has_active_profile_subscription(uuid) to anon, authenticated;
+
 drop policy if exists "Public can read published business profiles" on public.business_profiles;
 create policy "Public can read published business profiles"
 on public.business_profiles for select
 to anon, authenticated
 using (
   is_published = true
-  and exists (
-    select 1
-    from public.customer_subscriptions s
-    where s.profile_id = business_profiles.id
-      and s.status = 'paid'
-      and s.starts_at <= now()
-      and s.ends_at > now()
-  )
+  and (select public.has_active_profile_subscription(business_profiles.id))
 );
 
 -- Owners and platform admins retain their separate SELECT policies.
