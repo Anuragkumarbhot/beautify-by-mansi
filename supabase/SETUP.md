@@ -53,3 +53,21 @@ The existing `supabase/schema.sql` file contains the appointment booking tables 
 
 ## Current implementation boundary
 Cloud authentication, private draft saving, publication and public profile rendering are implemented in the frontend code, subject to applying the migration and configuring Supabase Auth. This work has been committed but not live-tested against the Supabase project. Razorpay subscriptions, QR scan analytics, custom domains, team accounts and admin moderation remain future work.
+
+
+## 7. Platform admin dashboard
+The read-only SaaS operations dashboard is available at `admin.html`. It lists business profiles and draft/published totals. The dashboard does not provide customer-content editing, payment controls, or QR scan analytics.
+
+1. Apply `supabase/migrations/002_platform_admin.sql` after migration 001.
+2. Create the intended admin account through Supabase Authentication.
+3. In the Supabase SQL Editor, provision that exact account by running the following after replacing the email:
+   ```sql
+   insert into public.platform_admins (user_id)
+   select id from auth.users where email = 'YOUR-ADMIN-EMAIL'
+   on conflict (user_id) do nothing;
+   ```
+4. Open `admin.html` and sign in with that account.
+
+Admin membership cannot be created or changed from the browser. The migration adds a narrowly scoped RLS policy that lets platform admins read business profile rows; owners retain their existing ownership policies. Do not expose the Supabase service-role key. Remove an admin by deleting their row from `public.platform_admins` in the SQL Editor.
+
+The dashboard currently fetches at most 500 profiles and reports only records returned by that query. It does not claim to report QR scans, revenue, or subscription status. Razorpay billing and event analytics require server-side functions and verified webhook processing, which are not included in this phase.
