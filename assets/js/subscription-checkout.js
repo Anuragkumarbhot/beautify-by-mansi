@@ -33,9 +33,11 @@ async function loadProfile() {
   }
   const { data, error } = await supabase.from("business_profiles")
     .select("id,business_name,slug").eq("owner_id", user.id)
-    .order("created_at", { ascending: true }).limit(1).maybeSingle();
+    .order("created_at", { ascending: true });
   if (error) throw error;
-  activeProfile = data || null;
+  const selector = $("profileSelector");
+  const selectedId = selector?.value;
+  activeProfile = (data || []).find(item => item.id === selectedId) || data?.[0] || null;
   return { user, profile: activeProfile };
 }
 async function loadPlans() {
@@ -152,6 +154,11 @@ async function refresh() {
     status(e.message || "Could not refresh billing information.", true);
   }
 }
+window.addEventListener("bm:active-profile-changed", (event) => {
+  activeProfile = event.detail?.profile || null;
+  refresh();
+});
+$("profileSelector")?.addEventListener("change", refresh);
 $("refreshBilling")?.addEventListener("click", refresh);
 supabase.auth.onAuthStateChange(() => {
   refresh();
