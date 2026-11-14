@@ -34,3 +34,6 @@ beautify-by-mansi/
 
 ## GitHub Pages deployment
 The site is deployed from the repository root by the GitHub Actions workflow at `.github/workflows/deploy.yml`. In the repository, open **Settings → Pages** and set **Build and deployment → Source** to **GitHub Actions**. Then open **Actions → Deploy Beautify by Mansi to GitHub Pages** and run the workflow (or push a commit to `main`). The public site URL is `https://anuragkumarbhot.github.io/beautify-by-mansi/` once the deployment succeeds.
+
+## Hybrid Business Studio
+Open [`business-studio.html`](business-studio.html) to preview a luxury digital business card, configure public contact details, generate a QR code for a website/review destination, and print a matching business stamp. The first version saves the profile in the current browser only; hosted customer profiles, authentication, shared cloud storage, and analytics are roadmap items and are not yet enabled.
