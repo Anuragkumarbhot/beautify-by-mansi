@@ -37,3 +37,14 @@ The site is deployed from the repository root by the GitHub Actions workflow at 
 
 ## Hybrid Business Studio
 Open [`business-studio.html`](business-studio.html) to preview a luxury digital business card, configure public contact details, generate a QR code for a website/review destination, and print a matching business stamp. The first version saves the profile in the current browser only; hosted customer profiles, authentication, shared cloud storage, and analytics are roadmap items and are not yet enabled.
+
+## Cloud business profiles
+
+The Business Studio now includes Supabase email authentication, private cloud drafts, a publish action, and a public profile route.
+
+- Studio: [business-studio.html](business-studio.html)
+- Public profile renderer: [profile.html](profile.html) (requires a published `?slug=` query parameter)
+- Client auth/data integration: [assets/js/business-studio-cloud.js](assets/js/business-studio-cloud.js)
+- Database migration and setup: [supabase/migrations/001_business_profiles.sql](supabase/migrations/001_business_profiles.sql) and [supabase/SETUP.md](supabase/SETUP.md)
+
+Apply the migration and configure Supabase email authentication before testing cloud features. The browser uses only the public publishable key; RLS protects customer data. Never add a service-role key to this repository.
