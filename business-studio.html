@@ -17,7 +17,7 @@
 <body>
 <header class="top"><div class="brand">Beautify by Mansi <span style="font:10px 'DM Sans';letter-spacing:.15em;color:#d9b99a">BUSINESS STUDIO</span></div><nav><a href="index.html">Beauty website</a><a href="digital-card.html">Digital card</a><a href="#plans">Plans</a></nav></header>
 <main class="wrap">
-<section class="intro"><div class="kicker">Your business, beautifully presented</div><h1>One studio. Every business identity.</h1><p>Create a shareable digital business card, a branded QR destination and a matching printable stamp. Start with a profile preview, then save it in this browser. Built for independent beauty professionals, studios and local businesses.</p></section>
+<section class="intro"><div class="kicker">Your business, beautifully presented</div><h1>One studio. Every business identity.</h1><p>Create separate shareable digital business cards for multiple brands or locations, with branded QR destinations and matching printable stamps. Save private drafts to your cloud workspace and publish each profile with its own active plan.</p></section>
 <section class="layout">
 <div class="panel editor-panel">
 <h2>Build your business identity</h2><p class="hint">Enter your public business details. Your preview updates as you type. Do not enter passwords, payment details or other sensitive information.</p>
@@ -55,7 +55,7 @@
 </div>
 <div class="actions"><button class="btn" type="submit">Save profile on this device</button><button class="btn secondary" type="button" id="reset">Reset preview</button></div><div class="actions"><button class="btn gold" type="button" id="cloudSave">Save profile to cloud</button><button class="btn secondary" type="button" id="cloudPublish">Publish public profile</button><a class="btn secondary" id="publicProfileLink" href="#" target="_blank" rel="noopener" hidden>Open public profile</a></div><div class="status" id="cloudSaveStatus" role="status"></div><div class="status" id="status" role="status"></div>
 </form>
-<div class="note"><b>Prototype storage:</b> profile data is saved only in this browser using local storage. This MVP does not yet create customer accounts, publish individual hosted profile URLs, or sync data between devices.</div>
+<div class="note"><b>Workspace:</b> cloud profiles are stored in your signed-in account. Starter supports one profile; Pro supports up to five. Each public profile requires its own active paid subscription. The local preview save remains separate from cloud publishing.</div>
 </div>
 <aside class="preview-wrap">
 <div class="preview-head"><span>Live digital card preview</span><span>01 / 03</span></div>
@@ -75,9 +75,9 @@
 <div class="note">Checkout uses a server-created Razorpay order. A successful checkout window is not proof of payment; your account remains pending until the verified webhook updates the subscription. Plans currently do not auto-renew.</div>
 </section>
 <section id="plans"><div class="kicker">Platform roadmap</div><h2 style="font:600 34px 'Cormorant Garamond';color:var(--wine);margin:8px 0 16px">A clear path from profile to platform</h2><div class="plans">
-<article class="plan"><h3>Starter</h3><strong>Free prototype</strong><p>Digital card preview, contact links, QR destination and printable stamp. Local browser save.</p></article>
-<article class="plan"><h3>Studio</h3><strong>Planned</strong><p>Hosted public profile, custom themes, account login, cloud sync and review QR management.</p></article>
-<article class="plan"><h3>Business Pro</h3><strong>Planned</strong><p>Multiple staff cards, booking integrations, scan analytics, custom domain and team workspace.</p></article>
+<article class="plan"><h3>Starter</h3><strong>One business profile</strong><p>One cloud business identity, base theme and public profile access with an active Starter subscription.</p></article>
+<article class="plan"><h3>Studio Pro</h3><strong>Up to five profiles</strong><p>Multiple business identities, premium themes and Google-review links. Each profile has its own paid access period.</p></article>
+<article class="plan"><h3>Business Pro</h3><strong>Planned</strong><p>Team member roles, staff cards, booking integrations, scan analytics and custom domains.</p></article>
 </div></section>
 </main>
 <footer class="footer">Beautify by Mansi · Luxury beauty and business identity tools · Ludhiana & Chandigarh</footer>
