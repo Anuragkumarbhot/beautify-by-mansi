@@ -123,3 +123,30 @@ Configure the Razorpay webhook URL to the deployed `razorpay-webhook` function U
 - Send an invalid signature and a mismatched amount; neither may activate access.
 
 This enforces profile visibility at the database RLS layer, not merely in browser JavaScript. It does not yet gate individual Studio tools, staff seats, analytics quotas or custom domains. It also does not implement automatic recurring collection: customers must manually purchase a renewal.
+
+## 10. Plan-based feature entitlements (migration 005)
+Apply `supabase/migrations/005_plan_entitlements.sql` after migration 004.
+
+The current plan map is:
+- **Starter · 30 days:** Rose Gold base theme; no public Google-review link.
+- **Pro · 30 days / Pro · 365 days:** all three card themes and public Google-review links.
+
+The entitlement map is stored in `subscription_plan_entitlements`. Browser roles have no direct access to that table. The owner-facing `get_business_profile_entitlements(profile_id)` RPC returns only the signed-in owner's current effective feature flags.
+
+### Enforcement model
+- PostgreSQL rejects attempts to save Ivory/Plum themes or add Google-review links without an active Pro entitlement.
+- PostgreSQL rejects a first publish unless the profile has an active paid subscription.
+- Anonymous users no longer have direct SELECT permission on `business_profiles`. Public cards are returned through `get_public_business_profile(slug)`, which checks publication and active paid access, downgrades non-Pro themes to Rose Gold, and suppresses the Google-review link for Starter.
+- The Studio editor disables unavailable controls based on the owner-facing entitlement RPC. The database remains authoritative if a browser request is modified.
+- The editor maps its local `wine` theme value to the database's canonical `rose-gold` value.
+
+### Verification checklist
+1. Apply migrations 001–005 in order.
+2. Confirm an anonymous REST SELECT on `business_profiles` is denied.
+3. Confirm `get_public_business_profile(slug)` returns null for an unpublished, unpaid or expired profile.
+4. With an active Starter plan, confirm the public card uses Rose Gold and does not show a Google-review link.
+5. With an active Pro plan, confirm Ivory/Plum themes and the Google-review link are available.
+6. Attempt to write a Pro-only theme or a new review URL directly through the authenticated REST API as Starter; PostgreSQL should reject the update.
+7. Confirm an authenticated owner cannot call `get_business_profile_entitlements` for another owner's profile.
+
+The feature map currently covers only features that exist in this MVP. Multiple profiles, staff seats, QR scan analytics, custom domains and automatic recurring payment collection are not included. The seeded prices remain illustrative and require commercial approval. No live Supabase or Razorpay test has been performed by this code change.
