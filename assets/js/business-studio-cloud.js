@@ -47,7 +47,7 @@ async function loadOwnProfile(user) {
     $("qr").src = "https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=" + encodeURIComponent(publicUrl(data.slug));
     $("qrCaption").textContent = publicUrl(data.slug);
   }
-  document.dispatchEvent(new Event("input"));
+  ["name","category","bio","phone","city","website","instagram","review","theme"].forEach(id => $(id)?.dispatchEvent(new Event("input", { bubbles: true })));
   setStatus("cloudSaveStatus", data.is_published ? "Cloud profile loaded and published." : "Cloud draft loaded.");
 }
 async function getUser() {
