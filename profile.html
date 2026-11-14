@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#51283b"><title>Business Profile | Beautify by Mansi</title><style>
+:root{--wine:#51283b;--rose:#bd8794;--gold:#bd9860;--cream:#fbf7f2;--ink:#30252b;--muted:#796c72}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:radial-gradient(circle at 15% 10%,#f2e3df,transparent 35%),var(--cream);font-family:Arial,sans-serif;color:var(--ink);display:grid;place-items:center;padding:24px}.card{width:min(470px,100%);background:linear-gradient(145deg,#3c1e2e,#684052 66%,#38202d);color:#fff8ef;border:1px solid var(--gold);border-radius:24px;padding:30px;box-shadow:0 25px 80px #51283b24;text-align:center;position:relative;overflow:hidden}.seal{width:64px;height:64px;border:1px solid #d6b77b;border-radius:50%;display:grid;place-items:center;margin:0 auto 18px;font:28px Georgia;color:#f1d7a7}.eyebrow{font-size:10px;letter-spacing:.2em;text-transform:uppercase;color:#e4cda5}.name{font:42px/1.05 Georgia,serif;margin:10px 0}.owner{font-size:12px;color:#f0dfe1}.bio{font-size:13px;line-height:1.7;color:#f0dfe1;margin:18px auto;max-width:350px}.details{border-top:1px solid #ffffff35;border-bottom:1px solid #ffffff35;padding:14px 0;margin:18px 0;font-size:12px;line-height:1.9;color:#f4dfc2}.links{display:grid;gap:9px}.links a{padding:13px;border-radius:11px;background:#f7eee7;color:#51283b;text-decoration:none;font-size:12px;font-weight:700}.links a.primary{background:var(--gold);color:#2f2025}.foot{font-size:10px;color:#e8d5d5;margin-top:20px}.state{color:#715c63;text-align:center;max-width:420px;line-height:1.6}.state h1{font:34px Georgia;color:var(--wine)}.state a{color:var(--wine)}.card.ivory{background:linear-gradient(145deg,#f5ece2,#e8d9c7);color:#382b30}.card.ivory .name,.card.ivory .details{color:#49363a}.card.ivory .eyebrow,.card.ivory .owner,.card.ivory .bio,.card.ivory .foot{color:#705a54}.card.ivory .details{border-color:#bda58e}.card.plum{background:linear-gradient(145deg,#281b31,#503d59 66%,#291c31)}@media print{body{background:white}.card{box-shadow:none}}
+</style></head><body><main id="root" class="state"><h1>Loading business profile…</h1><p>Please wait.</p></main>
+<script type="module">
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from "./assets/js/supabase-config.js";
+const root=document.getElementById("root");
+const supabase=createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+const params=new URLSearchParams(location.search);
+const slug=params.get("slug")||"";
+function node(tag,cls,text){const el=document.createElement(tag);if(cls)el.className=cls;if(text)el.textContent=text;return el}
+function link(parent,label,url,primary=false){if(!url)return;const a=node("a",primary?"primary":"",label);a.href=url;a.target="_blank";a.rel="noopener noreferrer";parent.append(a)}
+function validUrl(value){try{const u=new URL(value);return u.protocol==="https:"?u.href:""}catch{return ""}}
+async function render(){
+ if(!/^[a-z0-9](?:[a-z0-9-]{1,46}[a-z0-9])?$/.test(slug)){throw new Error("This profile link is not valid.");}
+ const {data,error}=await supabase.from("business_profiles").select("slug,business_name,owner_name,category,bio,phone,city,website_url,instagram_url,google_review_url,theme").eq("slug",slug).eq("is_published",true).single();
+ if(error||!data)throw new Error("This profile is unavailable or has not been published.");
+ document.title=data.business_name+" | Business Profile";
+ const card=node("article","card "+(data.theme==="ivory"?"ivory":data.theme==="plum"?"plum":""));
+ const initials=data.business_name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
+ card.append(node("div","seal",initials||"✦"),node("div","eyebrow",data.category||"Business profile"),node("h1","name",data.business_name));
+ if(data.owner_name)card.append(node("div","owner","By "+data.owner_name));
+ if(data.bio)card.append(node("p","bio",data.bio));
+ const details=node("div","details",[data.phone,data.city].filter(Boolean).join(" · "));if(details.textContent)card.append(details);
+ const links=node("div","links");
+ const digits=(data.phone||"").replace(/\D/g,"");
+ if(digits)link(links,"WhatsApp / Call","https://wa.me/"+digits,true);
+ link(links,"Visit website",validUrl(data.website_url));
+ link(links,"Instagram",validUrl(data.instagram_url));
+ link(links,"Leave a Google review",validUrl(data.google_review_url));
+ if(!links.children.length)links.append(node("p","","Contact details will be added soon."));
+ card.append(links,node("div","foot","A digital business identity · Shared with care"));
+ root.replaceWith(card);
+}
+render().catch(e=>{root.replaceChildren(node("h1","","Profile unavailable"),node("p","",e.message),node("a","","Return to Beautify by Mansi"));root.querySelector("a").href="index.html";});
+</script></body></html>
