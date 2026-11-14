@@ -150,3 +150,26 @@ The entitlement map is stored in `subscription_plan_entitlements`. Browser roles
 7. Confirm an authenticated owner cannot call `get_business_profile_entitlements` for another owner's profile.
 
 The feature map currently covers only features that exist in this MVP. Multiple profiles, staff seats, QR scan analytics, custom domains and automatic recurring payment collection are not included. The seeded prices remain illustrative and require commercial approval. No live Supabase or Razorpay test has been performed by this code change.
+
+
+## 11. Multi-profile workspace (migration 006)
+Apply `supabase/migrations/006_multi_profile_workspace.sql` after migration 005.
+
+### Profile limits
+- **Starter:** one business profile per authenticated account.
+- **Pro monthly / Pro yearly:** up to five business profiles per account.
+- Each profile has its own name, slug, contact details, theme, review URL, publication state and subscription history.
+- Checkout is scoped to the currently selected profile. Each profile must have its own active paid subscription to remain publicly available.
+- The database checks the profile count on insert and serializes concurrent creation attempts per account to prevent exceeding the limit through parallel requests.
+- The workspace entitlement RPC exposes only the signed-in account's profile count, limit and plan tier.
+
+### Test checklist
+1. Apply migrations 001–006 in order.
+2. Sign in with a Starter account and create one profile. Confirm a second insert is rejected by PostgreSQL.
+3. Activate a Pro subscription on one owned profile; confirm the workspace limit becomes five.
+4. Create additional profiles up to five; confirm the sixth is rejected.
+5. Select a different profile in Business Studio and confirm save, publish and checkout target that selected profile.
+6. Confirm each public slug resolves only to its own profile and requires that profile's active subscription.
+7. Test concurrent create requests near the limit; the final profile count must never exceed the account's plan limit.
+
+The current Studio supports profile switching and creation, but does not yet provide team member roles, staff seat management, bulk profile import, or shared subscription pooling. Profile access remains independently billed per profile. No live Supabase integration test has been performed.
