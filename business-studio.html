@@ -30,6 +30,15 @@
 <div class="actions"><button class="btn" type="button" id="cloudSignIn">Sign in</button><button class="btn secondary" type="button" id="cloudSignUp">Create account</button><button class="btn secondary" type="button" id="cloudSignOut" hidden>Sign out</button></div>
 <div class="status" id="cloudStatus" role="status">Not signed in. Cloud publishing requires a verified account.</div>
 </div>
+<section class="panel" id="profileWorkspace" style="margin-bottom:16px">
+<h2>Business profiles</h2>
+<p class="hint">Manage separate identities for different brands, branches or services. Starter supports one profile; active Pro supports up to five.</p>
+<div class="fields">
+<label class="field full">Select a business profile<select id="profileSelector"><option value="">No saved profiles yet</option></select></label>
+</div>
+<div class="actions"><button class="btn secondary" type="button" id="newBusinessProfile">＋ Create another profile</button></div>
+<div class="status" id="profileWorkspaceStatus" role="status"></div>
+</section>
 <form id="builder">
 <div class="fields">
 <label class="field full">Public profile URL slug<input id="slug" maxlength="48" pattern="[a-z0-9-]+" value="beautify-by-mansi" placeholder="your-business-name"><span style="font-size:10px;color:#796c72;font-weight:400">Your public link will end in profile.html?slug=your-business-name</span></label>
