@@ -14,8 +14,8 @@ function link(parent,label,url,primary=false){if(!url)return;const a=node("a",pr
 function validUrl(value){try{const u=new URL(value);return u.protocol==="https:"?u.href:""}catch{return ""}}
 async function render(){
  if(!/^[a-z0-9](?:[a-z0-9-]{1,46}[a-z0-9])?$/.test(slug)){throw new Error("This profile link is not valid.");}
- const {data,error}=await supabase.from("business_profiles").select("slug,business_name,owner_name,category,bio,phone,city,website_url,instagram_url,google_review_url,theme").eq("slug",slug).eq("is_published",true).single();
- if(error||!data)throw new Error("This profile is unavailable or has not been published.");
+ const {data,error}=await supabase.rpc("get_public_business_profile",{p_slug:slug});
+ if(error||!data)throw new Error("This profile is unavailable, unpublished or its paid access has expired.");
  document.title=data.business_name+" | Business Profile";
  const card=node("article","card "+(data.theme==="ivory"?"ivory":data.theme==="plum"?"plum":""));
  const initials=data.business_name.split(/\s+/).filter(Boolean).slice(0,2).map(x=>x[0]).join("").toUpperCase();
