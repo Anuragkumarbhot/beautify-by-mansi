@@ -273,6 +273,35 @@ function updateCalculatorSummary() {
     const balance=document.getElementById('balanceAmount'); if(balance) balance.textContent=formatINR(Math.max(0,totals.offerTotal-advance));
     const countLabel=document.getElementById('quotePackageCount'); if(countLabel) countLabel.textContent=selected.length;
 }
+function getCampaignAttribution() {
+    const keys = ['utm_source', 'utm_medium', 'utm_campaign', 'utm_content', 'utm_term'];
+    const params = new URLSearchParams(window.location.search);
+    const current = {};
+    keys.forEach(key => {
+        const value = params.get(key);
+        if (value) current[key] = value.slice(0, 160);
+    });
+    try {
+        const stored = JSON.parse(sessionStorage.getItem('beautify_campaign_attribution') || '{}');
+        const attribution = Object.keys(current).length ? current : stored;
+        if (Object.keys(current).length) {
+            sessionStorage.setItem('beautify_campaign_attribution', JSON.stringify(current));
+        }
+        return attribution;
+    } catch (error) {
+        return current;
+    }
+}
+
+function trackBeautifyEvent(eventName, details = {}) {
+    window.dataLayer = window.dataLayer || [];
+    window.dataLayer.push({
+        event: eventName,
+        business_name: 'Beautify by Mansi',
+        ...details
+    });
+}
+
 async function sendWhatsAppBooking() {
     const selected=getSelectedPackages();
     if(!selected.length) { alert('Please select at least one service package.'); return; }
@@ -330,7 +359,10 @@ async function sendWhatsAppBooking() {
         appState.bookings.unshift(booking);
         persistState();
     }
-    const lines=['Hello '+appState.studio.brandName+'! I would like to request a booking.','Booking reference: '+booking.id,'Name: '+name,'Customer contact: '+phone,'Event: '+event,'Event date: '+date,'Preferred time: '+time,'Service location: '+location,'Preferred nail style: '+appState.selectedShade,'Additional notes: '+(notes||'None'),'','Requested services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Estimated offer total: '+formatINR(totals.offerTotal),'Indicative advance: '+formatINR(advance),'Indicative balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'','Please confirm slot availability, final pricing and payment instructions. This message is a booking request, not a confirmed appointment.'];
+    const attribution=getCampaignAttribution();
+    const campaignLines=Object.keys(attribution).length?['','Campaign source: '+(attribution.utm_source||'not set'),'Campaign medium: '+(attribution.utm_medium||'not set'),'Campaign name: '+(attribution.utm_campaign||'not set'),'Campaign content: '+(attribution.utm_content||'not set')]:[];
+    const lines=['Hello '+appState.studio.brandName+'! I would like to request a booking.','Booking reference: '+booking.id,'Name: '+name,'Customer contact: '+phone,'Event: '+event,'Event date: '+date,'Preferred time: '+time,'Service location: '+location,'Preferred nail style: '+appState.selectedShade,'Additional notes: '+(notes||'None'),'','Requested services:',...selected.map(p=>'• '+p.name+' — '+formatINR(p.price)),'','Regular total: '+formatINR(totals.regularTotal),'Savings: '+formatINR(savings),'Estimated offer total: '+formatINR(totals.offerTotal),'Indicative advance: '+formatINR(advance),'Indicative balance: '+formatINR(Math.max(0,totals.offerTotal-advance)),'','Please confirm slot availability, final pricing and payment instructions. This message is a booking request, not a confirmed appointment.',...campaignLines];
+    trackBeautifyEvent('whatsapp_enquiry_opened', { enquiry_type: 'booking', campaign_source: attribution.utm_source || 'direct', campaign_name: attribution.utm_campaign || 'not_set', service_count: selected.length, estimated_value: totals.offerTotal });
     whatsappWindow.opener=null;
     whatsappWindow.location.href='https://wa.me/'+digits+'?text='+encodeURIComponent(lines.join('\n'));
 }
