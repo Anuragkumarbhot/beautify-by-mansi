@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#2b2028">
+<meta name="description" content="Authorized order management for Beautify by Mansi.">
+<title>Order Desk | Beautify by Mansi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#2b2028;--plum:#563448;--rose:#c98e91;--paper:#fcf9f6;--blush:#f5e9e5;--gold:#b99a68;--muted:#786d72;--line:#eaded9;--green:#28684e;--red:#984b56}
+*{box-sizing:border-box}body{margin:0;background:#f7f1ed;color:var(--ink);font:14px 'DM Sans',sans-serif}.top{background:var(--ink);color:#fff7f2;padding:16px 5%;display:flex;align-items:center;justify-content:space-between;gap:15px}.brand{font:24px 'Playfair Display',serif}.top a{color:#f1d7ca;font-size:12px}.wrap{width:min(1180px,92%);margin:35px auto 70px}.eyebrow{font-size:10px;letter-spacing:.24em;text-transform:uppercase;color:var(--gold);font-weight:700}.intro h1{font:clamp(38px,6vw,58px)/1.05 'Playfair Display',serif;margin:12px 0}.muted{color:var(--muted);line-height:1.7;font-size:12px}.panel,.stat,.order{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:0 10px 30px #3a202b08}.auth{max-width:460px;margin-top:22px}.field{display:grid;gap:7px;margin:13px 0;font-size:12px;font-weight:700;color:var(--plum)}input,select{width:100%;padding:12px;border:1px solid var(--line);border-radius:9px;background:white;font:13px 'DM Sans',sans-serif;color:var(--ink)}.btn{border:0;background:var(--plum);color:white;border-radius:9px;padding:11px 16px;font-weight:700;font-size:12px;cursor:pointer}.btn.alt{background:var(--blush);color:var(--plum)}.btn:disabled{opacity:.55;cursor:not-allowed}.status{min-height:20px;margin-top:12px;color:var(--muted);font-size:12px}.status.error{color:var(--red)}.toolbar{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin:20px 0}.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:18px 0}.stat small{color:var(--muted);font-size:11px}.stat strong{display:block;font:27px 'Playfair Display',serif;color:var(--plum);margin-top:7px}.filters{display:flex;align-items:center;gap:9px;flex-wrap:wrap}.filters select{width:auto;min-width:150px}.orders{display:grid;gap:14px}.order-head{display:flex;justify-content:space-between;gap:15px;align-items:flex-start}.order-id{font-size:10px;color:var(--muted);overflow-wrap:anywhere}.order h2{font:21px 'Playfair Display',serif;margin:4px 0}.badge{display:inline-block;padding:5px 9px;background:var(--blush);border-radius:20px;color:var(--plum);font-size:10px;font-weight:700}.badges{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.order-grid{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:12px;margin-top:16px}.detail{background:#f8f1ed;padding:12px;border-radius:11px;min-width:0}.detail b{display:block;font-size:10px;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px}.detail span,.detail p{font-size:12px;line-height:1.6;overflow-wrap:anywhere;margin:0}.itemline{display:flex;justify-content:space-between;gap:10px;font-size:12px;padding:5px 0;border-bottom:1px solid var(--line)}.status-control{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-top:15px}.status-control select{max-width:190px}.empty{padding:45px 15px;text-align:center;color:var(--muted);background:var(--paper);border:1px dashed var(--line);border-radius:14px}.hidden{display:none!important}.footnote{font-size:10px;color:var(--muted);line-height:1.6;margin-top:14px}@media(max-width:760px){.stats{grid-template-columns:repeat(2,1fr)}.order-grid{grid-template-columns:1fr}.order-head{flex-direction:column}.wrap{margin-top:25px}}@media(max-width:450px){.top{align-items:flex-start;flex-direction:column}.filters{width:100%}.filters select{flex:1;min-width:120px}}
+</style>
+</head>
+<body>
+<header class="top"><div class="brand">Beautify by Mansi <span style="color:var(--rose)">· Order Desk</span></div><a href="the-beauty-edit.html">View storefront ↗</a></header>
+<main class="wrap">
+<section class="intro"><div class="eyebrow">Studio control centre</div><h1>Customer orders</h1><p class="muted">Review nail orders submitted through The Beauty Edit. Order visibility and edits are controlled by Supabase Row Level Security.</p></section>
+<section id="authPanel" class="panel auth"><h2 style="font:24px 'Playfair Display';margin:0 0 6px">Administrator sign in</h2><p class="muted">Sign in with the studio account added to the <code>booking_admins</code> allow-list.</p><form id="signInForm"><label class="field">Email<input id="email" type="email" autocomplete="username" required></label><label class="field">Password<input id="password" type="password" autocomplete="current-password" required></label><button class="btn" id="signInButton" type="submit">Sign in to orders</button></form><div id="authStatus" class="status" role="status" aria-live="polite"></div></section>
+<section id="dashboard" class="hidden">
+<div class="toolbar"><p id="identity" class="muted"></p><div class="filters"><button id="refreshButton" class="btn alt" type="button">Refresh orders</button><button id="signOutButton" class="btn alt" type="button">Sign out</button></div></div>
+<div class="stats"><article class="stat"><small>All visible orders</small><strong id="statTotal">0</strong></article><article class="stat"><small>New / Contacted</small><strong id="statNew">0</strong></article><article class="stat"><small>In progress / Ready</small><strong id="statProgress">0</strong></article><article class="stat"><small>Marked paid</small><strong id="statPaid">0</strong></article></div>
+<div class="toolbar"><div><div class="eyebrow">Order inbox</div><h2 style="font:29px 'Playfair Display';margin:7px 0">Latest requests</h2></div><div class="filters"><select id="statusFilter" aria-label="Filter orders by status"><option value="all">All statuses</option><option>New</option><option>Contacted</option><option>Confirmed</option><option>In Progress</option><option>Ready</option><option>Completed</option><option>Cancelled</option></select></div></div>
+<div id="ordersList" class="orders" aria-live="polite"></div><div id="dataStatus" class="status" role="status"></div>
+<p class="footnote">Payment status is displayed for reference. This page does not alter payment status or verify payments. Never mark an order paid based on a screenshot or customer message; connect payment updates to a verified server-side payment webhook.</p>
+</section>
+</main>
+<script type="module">
+import './assets/js/supabase-client.js';
+const cloud=window.BeautifyCloud;
+const $=id=>document.getElementById(id);
+const statuses=['New','Contacted','Confirmed','In Progress','Ready','Completed','Cancelled'];
+let allOrders=[];
+const money=value=>'₹'+Number(value||0).toLocaleString('en-IN');
+const date=value=>{if(!value)return '—';const d=new Date(value);return Number.isNaN(d.getTime())?'—':d.toLocaleString('en-IN',{dateStyle:'medium',timeStyle:'short'})};
+function setStatus(id,message,error=false){const el=$(id);el.textContent=message;el.classList.toggle('error',error)}
+function addText(parent,tag,className,value){const el=document.createElement(tag);if(className)el.className=className;el.textContent=value??'';parent.appendChild(el);return el}
+function renderOrders(){
+ const filter=$('statusFilter').value;
+ const visible=allOrders.filter(o=>filter==='all'||o.order_status===filter);
+ $('ordersList').replaceChildren();
+ if(!visible.length){addText($('ordersList'),'div','empty',allOrders.length?'No orders match this status filter.':'No orders found yet.');return}
+ visible.forEach(order=>{
+  const card=addText($('ordersList'),'article','order','');
+  const head=addText(card,'div','order-head','');
+  const left=addText(head,'div','','');
+  addText(left,'div','order-id','Reference: '+order.id);
+  addText(left,'h2','',order.customer_name||'Customer');
+  addText(left,'div','muted',date(order.created_at));
+  const badges=addText(head,'div','badges','');
+  addText(badges,'span','badge',order.order_status||'New');
+  addText(badges,'span','badge','Payment: '+(order.payment_status||'Not Started'));
+  const grid=addText(card,'div','order-grid','');
+  const items=addText(grid,'div','detail','');addText(items,'b','','Items');
+  if(Array.isArray(order.items)&&order.items.length){
+   order.items.forEach(item=>{
+    const line=addText(items,'div','itemline','');
+    addText(line,'span','',(item.name||item.product_id||'Item')+' · '+(item.size||'Size not set')+' × '+(item.quantity||1));
+    addText(line,'strong','',money(item.line_total||((item.unit_price||0)*(item.quantity||1))));
+   });
+  } else addText(items,'p','','No item details');
+  addText(items,'p','', 'Total: '+money(order.total));
+  const customer=addText(grid,'div','detail','');addText(customer,'b','','Customer');
+  addText(customer,'span','',(order.customer_name||'')+' · '+(order.customer_phone||''));
+  if(order.customer_email)addText(customer,'p','',order.customer_email);
+  addText(customer,'p','', 'Fulfilment: '+(order.fulfilment_type||'not_set'));
+  if(order.delivery_address)addText(customer,'p','',order.delivery_address);
+  const notes=addText(grid,'div','detail','');addText(notes,'b','','Notes & payment');
+  addText(notes,'p','',order.customer_notes||'No customer notes');
+  addText(notes,'p','', 'Payment provider: '+(order.payment_provider||'none'));
+  const reference=order.payment_reference||'—';addText(notes,'p','', 'Payment reference: '+reference);
+  const control=addText(card,'div','status-control','');
+  addText(control,'label','','Update order status');
+  const select=document.createElement('select');select.setAttribute('aria-label','New status for order '+order.id);
+  statuses.forEach(status=>{const option=document.createElement('option');option.value=status;option.textContent=status;option.selected=status===order.order_status;select.appendChild(option)});
+  control.appendChild(select);
+  const save=document.createElement('button');save.className='btn';save.type='button';save.textContent='Save status';control.appendChild(save);
+  save.addEventListener('click',async()=>{
+   save.disabled=true;setStatus('dataStatus','Saving order status…');
+   try{await cloud.updateOrderStatus(order.id,select.value);order.order_status=select.value;renderStats();setStatus('dataStatus','Order '+order.id+' updated.');}
+   catch(error){console.error(error);setStatus('dataStatus',error.message||'Could not update order status.',true)}
+   finally{save.disabled=false}
+  });
+ });
+}
+function renderStats(){
+ $('statTotal').textContent=allOrders.length;
+ $('statNew').textContent=allOrders.filter(o=>['New','Contacted'].includes(o.order_status)).length;
+ $('statProgress').textContent=allOrders.filter(o=>['In Progress','Ready'].includes(o.order_status)).length;
+ $('statPaid').textContent=allOrders.filter(o=>o.payment_status==='Paid').length;
+}
+async function refresh(){
+ $('refreshButton').disabled=true;setStatus('dataStatus','Loading orders…');
+ try{allOrders=await cloud.listOrders();renderStats();renderOrders();setStatus('dataStatus','Showing '+allOrders.length+' most recent orders.');}
+ catch(error){console.error(error);setStatus('dataStatus',error.message||'Unable to load orders. Check migration and admin permissions.',true)}
+ finally{$('refreshButton').disabled=false}
+}
+async function showDashboard(session){
+ $('authPanel').classList.add('hidden');
+ try{
+  const allowed=await cloud.isBookingAdmin();
+  if(!allowed){$('authPanel').classList.remove('hidden');$('dashboard').classList.add('hidden');setStatus('authStatus','This account is signed in but is not listed as an authorized studio admin in booking_admins.',true);return}
+  $('dashboard').classList.remove('hidden');$('identity').textContent='Signed in as '+(session.user.email||'studio administrator');await refresh();
+ }catch(error){$('authPanel').classList.remove('hidden');$('dashboard').classList.add('hidden');setStatus('authStatus',error.message||'Could not verify administrator permission.',true)}
+}
+$('signInForm').addEventListener('submit',async event=>{
+ event.preventDefault();$('signInButton').disabled=true;setStatus('authStatus','Signing in…');
+ try{const session=await cloud.signIn($('email').value.trim(),$('password').value);await showDashboard(session)}
+ catch(error){setStatus('authStatus',error.message||'Sign-in failed.',true)}
+ finally{$('signInButton').disabled=false}
+});
+$('refreshButton').addEventListener('click',refresh);
+$('statusFilter').addEventListener('change',renderOrders);
+$('signOutButton').addEventListener('click',async()=>{try{await cloud.signOut();allOrders=[];$('dashboard').classList.add('hidden');$('authPanel').classList.remove('hidden');setStatus('authStatus','You have signed out.')}catch(error){setStatus('dataStatus',error.message,true)}});
+if(!cloud||!cloud.configured){setStatus('authStatus','Supabase is not configured. Add the project URL and anon key in assets/js/supabase-config.js.',true)}
+else{try{const session=await cloud.getSession();if(session)await showDashboard(session)}catch(error){setStatus('authStatus',error.message||'Could not restore session.',true)}}
+</script>
+</body></html>
