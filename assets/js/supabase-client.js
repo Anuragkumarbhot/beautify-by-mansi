@@ -36,6 +36,29 @@ const cloud = {
     const { data } = client.auth.onAuthStateChange((_event, session) => callback(session));
     return () => data.subscription.unsubscribe();
   },
+  async isBookingAdmin() {
+    if (!client) return false;
+    const { data, error } = await client.rpc('is_booking_admin');
+    if (error) throw error;
+    return data === true;
+  },
+  async listOrders() {
+    if (!client) throw new Error('Supabase is not configured.');
+    const { data, error } = await client
+      .from('orders')
+      .select('id,created_at,customer_name,customer_phone,customer_email,order_type,items,total,currency,fulfilment_type,delivery_address,customer_notes,order_status,payment_status,payment_provider,payment_reference,source')
+      .order('created_at', { ascending: false })
+      .limit(200);
+    if (error) throw error;
+    return data || [];
+  },
+  async updateOrderStatus(id, status) {
+    const allowed = ['New', 'Contacted', 'Confirmed', 'In Progress', 'Ready', 'Completed', 'Cancelled'];
+    if (!allowed.includes(status)) throw new Error('Invalid order status.');
+    if (!client) throw new Error('Supabase is not configured.');
+    const { error } = await client.from('orders').update({ order_status: status }).eq('id', id);
+    if (error) throw error;
+  },
   async createOrder(order) {
     if (!client) throw new Error('Cloud orders are not configured.');
     const id = order.id || crypto.randomUUID();
