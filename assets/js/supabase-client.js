@@ -36,6 +36,34 @@ const cloud = {
     const { data } = client.auth.onAuthStateChange((_event, session) => callback(session));
     return () => data.subscription.unsubscribe();
   },
+  async createOrder(order) {
+    if (!client) throw new Error('Cloud orders are not configured.');
+    const id = order.id || crypto.randomUUID();
+    const row = {
+      id,
+      customer_name: order.customerName,
+      customer_phone: order.customerPhone,
+      customer_email: order.customerEmail || '',
+      order_type: 'nail_product',
+      items: order.items,
+      subtotal: order.subtotal,
+      discount: 0,
+      total: order.total,
+      currency: 'INR',
+      fulfilment_type: order.fulfilmentType || 'not_set',
+      delivery_address: order.deliveryAddress || '',
+      customer_notes: order.customerNotes || '',
+      order_status: 'New',
+      payment_status: 'Not Started',
+      payment_provider: 'none',
+      payment_reference: '',
+      source: 'website'
+    };
+    const { error } = await client.from('orders').insert(row);
+    if (error) throw error;
+    // Public users cannot SELECT orders; return the client-generated reference.
+    return { id, status: 'New' };
+  },
   async createBooking(booking) {
     if (!client) throw new Error('Cloud booking is not configured.');
     const row = {
