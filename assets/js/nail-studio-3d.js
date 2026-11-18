@@ -12,7 +12,7 @@ if(host){
  const fill=new THREE.DirectionalLight(0xffc9d1,1.5);fill.position.set(-6,4,-4);scene.add(fill);
  const rim=new THREE.PointLight(0xffffff,35,18);rim.position.set(0,5,-5);scene.add(rim);
  const floor=new THREE.Mesh(new THREE.CircleGeometry(7,80),new THREE.MeshStandardMaterial({color:'#e8d5d0',roughness:.86}));floor.rotation.x=-Math.PI/2;floor.position.y=-.58;floor.receiveShadow=true;scene.add(floor);
- const rig=new THREE.Group();scene.add(rig);let settings={shape:'almond',color:'#6d1835',finish:'Glossy',art:'Minimal'};
+ const rig=new THREE.Group();scene.add(rig);let settings={shape:'almond',color:'#6d1835',finish:'Glossy',art:'Minimal'};const fingerNames=['Little','Ring','Middle','Index','Thumb'];let selectedFinger=null;let perNail=Array.from({length:10},()=>({...settings}));let fingerGroups=[];let selectionRing=null;
  const skin=new THREE.MeshStandardMaterial({color:'#d8a58f',roughness:.48});
  const skinLight=new THREE.MeshStandardMaterial({color:'#e4b6a2',roughness:.42});
  const pearlMat=new THREE.MeshPhysicalMaterial({color:'#fff6ec',metalness:.12,roughness:.1,clearcoat:1,clearcoatRoughness:.04});
@@ -31,27 +31,32 @@ if(host){
   if(finish==='Glitter'){for(let i=0;i<28;i++){const t=.12+((i*37)%73)/100,u=(((i*19)%91)/45.5)-1;const dot=new THREE.Mesh(new THREE.SphereGeometry(.012+(i%3)*.004,8,6),new THREE.MeshStandardMaterial({color:i%3?'#f7dfb6':'#fff5e6',metalness:.8,roughness:.22}));dot.position.set(u*widthAt(shape,t),.115+.08*(1-u*u),(t-.5)*1.92);detail.add(dot)}}
   return detail;
  }
- function makeFinger(shape,index,row){
+ function makeFinger(config,index,row){
   const finger=new THREE.Group();const len=[1.5,1.72,1.82,1.68,1.42][index];const radius=[.255,.29,.31,.29,.245][index];
   const pad=new THREE.Mesh(new THREE.CapsuleGeometry(radius,len,8,18),row===0?skin:skinLight);pad.rotation.x=Math.PI/2;pad.position.set(0,-.19,.02);pad.castShadow=true;pad.receiveShadow=true;finger.add(pad);
-  const nail=makePlate(shape,settings.color,settings.finish,settings.art);nail.position.y=.115;finger.add(nail);
+  const nail=makePlate(config.shape,config.color,config.finish,config.art);nail.position.y=.115;finger.add(nail);
   const cuticle=new THREE.Mesh(new THREE.TorusGeometry(radius*.48,.018,8,32,Math.PI),new THREE.MeshStandardMaterial({color:'#bd8978',roughness:.55}));cuticle.rotation.z=Math.PI;cuticle.position.set(0,.12,.82);finger.add(cuticle);
   return finger;
  }
  function rebuild(){
-  rig.clear();
+  rig.clear();fingerGroups=[];selectionRing=null;
   for(let row=0;row<2;row++)for(let i=0;i<5;i++){
-   const f=makeFinger(settings.shape,i,row);const x=(i-2)*.94;const z=row===0?-.95:1.35;
-   f.position.set(x,0,z);f.rotation.y=(i-2)*-.045;f.rotation.z=(i-2)*-.035;rig.add(f);
+   const idx=row*5+i;const f=makeFinger(perNail[idx],i,row);const x=(i-2)*.94;const z=row===0?-.95:1.35;
+   f.position.set(x,0,z);f.rotation.y=(i-2)*-.045;f.rotation.z=(i-2)*-.035;f.userData.nailIndex=idx;rig.add(f);fingerGroups.push(f);
+   if(selectedFinger===idx){const ring=new THREE.Mesh(new THREE.TorusGeometry(.34,.025,8,48),new THREE.MeshBasicMaterial({color:'#b58b50'}));ring.rotation.x=Math.PI/2;ring.position.set(0,-.48,0);f.add(ring);selectionRing=ring;}
   }
+  updateSelectionLabel();
  }
+ function updateSelectionLabel(){const el=document.getElementById('nailSelectedLabel');if(el)el.textContent=selectedFinger===null?'Editing all 10 nails':fingerNames[selectedFinger%5]+' · '+(selectedFinger<5?'Left hand':'Right hand')+' selected';}
+ function applySetting(key,value){settings[key]=value;if(selectedFinger===null)perNail=perNail.map(n=>({...n,[key]:value}));else perNail[selectedFinger]={...perNail[selectedFinger],[key]:value};rebuild();}
+ const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',event=>{const rect=renderer.domElement.getBoundingClientRect();pointer.x=((event.clientX-rect.left)/rect.width)*2-1;pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(fingerGroups,true)[0];if(hit){let obj=hit.object;while(obj&&obj.userData.nailIndex===undefined)obj=obj.parent;if(obj){selectedFinger=obj.userData.nailIndex;rebuild();}}});
  function resize(){const w=Math.max(host.clientWidth,1),h=Math.max(host.clientHeight,1);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}
  const observer=new ResizeObserver(resize);observer.observe(host);resize();rebuild();
  function pressed(selector,value){document.querySelectorAll(selector).forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.shape===value||b.dataset.color===value)))}
- document.querySelectorAll('[data-shape]').forEach(b=>b.addEventListener('click',()=>{settings.shape=b.dataset.shape;document.querySelectorAll('[data-shape]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));rebuild()}));
- document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>{settings.color=b.dataset.color;document.querySelectorAll('[data-color]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));rebuild()}));
- document.getElementById('nailFinish')?.addEventListener('change',e=>{settings.finish=e.target.value;rebuild()});
- document.getElementById('nailArt')?.addEventListener('change',e=>{settings.art=e.target.value;rebuild()});
+ document.querySelectorAll('[data-shape]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-shape]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));applySetting('shape',b.dataset.shape)}));
+ document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('[data-color]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));applySetting('color',b.dataset.color)}));
+ document.getElementById('nailFinish')?.addEventListener('change',e=>applySetting('finish',e.target.value));
+ document.getElementById('nailArt')?.addEventListener('change',e=>applySetting('art',e.target.value));
  document.getElementById('addCustomNails')?.addEventListener('click',()=>{const size=document.getElementById('nailCustomSize')?.value||'';const colorName=document.querySelector('[data-color="'+settings.color+'"]')?.title||settings.color;window.addCustomNailToCart?.({...settings,colorName,size})});
  const animate=()=>{requestAnimationFrame(animate);controls.update();renderer.render(scene,camera)};animate();
 }
