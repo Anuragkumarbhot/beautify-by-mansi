@@ -425,8 +425,8 @@ function exportBookingsCSV() {
     if(!rows.length){alert('There are no booking records to export.');return;}
     const cols=['id','createdAt','name','phone','event','date','time','location','services','offerTotal','status','notes'];
     const cell=v=>'"'+String(v??'').replace(/"/g,'""')+'"';
-    const csv=[cols.join(','),...rows.map(b=>cols.map(k=>cell(k==='services'?(b.services||[]).map(x=>x.name).join(' | '):b[k])).join(','))].join('\\r\\n');
-    const blob=new Blob(['\\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
+    const csv=[cols.join(','),...rows.map(b=>cols.map(k=>cell(k==='services'?(b.services||[]).map(x=>x.name).join(' | '):b[k])).join(','))].join('\r\n');
+    const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='beautify-bookings.csv';a.click();URL.revokeObjectURL(url);
 }
 async function renderAdminDashboard() {
