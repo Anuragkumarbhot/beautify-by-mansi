@@ -170,6 +170,7 @@ const DEFAULT_STATE = {
 
 let appState = loadState();
 let cloudAdminBookings = [];
+let cloudAdminOrders = [];
 let cloudAdminSession = null;
 let cloudBookingsSubscription = null;
 
@@ -429,6 +430,64 @@ function exportBookingsCSV() {
     const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
     const url=URL.createObjectURL(blob);const a=document.createElement('a');a.href=url;a.download='beautify-bookings.csv';a.click();URL.revokeObjectURL(url);
 }
+
+function orderItemsLabel(items) {
+    if (!Array.isArray(items)) return 'Order items unavailable';
+    return items.map(item => {
+        if (typeof item === 'string') return item;
+        if (!item || typeof item !== 'object') return String(item ?? '');
+        const name = item.name || item.title || item.productName || 'Product';
+        const quantity = Number(item.quantity || item.qty || 1);
+        const size = item.size ? ' · Size ' + item.size : '';
+        return name + ' × ' + (Number.isFinite(quantity) && quantity > 0 ? quantity : 1) + size;
+    }).map(escapeHTML).join('<br>');
+}
+function exportOrdersCSV() {
+    if (!cloudAdminOrders.length) { alert('There are no order records to export.'); return; }
+    const cols = ['id','created_at','customer_name','customer_phone','customer_email','order_type','items','total','currency','fulfilment_type','delivery_address','customer_notes','order_status','payment_status','payment_provider','payment_reference','source'];
+    const cell = value => '"' + String(value ?? '').replace(/"/g, '""') + '"';
+    const csv = [cols.join(','), ...cloudAdminOrders.map(order => cols.map(key => cell(key === 'items' ? JSON.stringify(order.items || []) : order[key])).join(','))].join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url; link.download = 'beautify-orders.csv'; link.click();
+    URL.revokeObjectURL(url);
+}
+async function updateStudioOrderStatus(id, status) {
+    const allowed = ['New','Contacted','Confirmed','In Progress','Ready','Completed','Cancelled'];
+    if (!allowed.includes(status)) return;
+    try {
+        await window.BeautifyCloud.updateOrderStatus(id, status);
+        await renderAdminDashboard();
+    } catch (error) {
+        alert('Could not update order status: ' + error.message);
+        await renderAdminDashboard();
+    }
+}
+function renderStudioOrders(rows) {
+    const counts = ['New','Contacted','Confirmed','In Progress','Ready','Completed','Cancelled']
+        .map(status => ({ status, count: rows.filter(order => order.order_status === status).length }));
+    return '<section class="panel" style="margin-top:24px"><div class="admin-actions"><div><h3 style="font-size:27px;color:var(--wine)">Studio Orders</h3><p class="muted">Customer orders submitted through The Beauty Edit.</p></div><button class="btn btn-outline" type="button" onclick="exportOrdersCSV()">Export orders CSV</button></div>' +
+        '<div class="admin-summary">' + counts.map(item => '<div class="admin-stat"><span>' + item.status + '</span><strong>' + item.count + '</strong></div>').join('') + '</div>' +
+        '<p class="muted">' + rows.length + ' order record(s) in Supabase · newest first · maximum 200 records.</p>' +
+        (rows.length ? '<div class="admin-bookings">' + rows.map(order => {
+            const created = order.created_at ? new Date(order.created_at).toLocaleString('en-IN') : 'Date unavailable';
+            const total = formatINR(order.total);
+            const address = order.delivery_address ? '<p><b>Delivery address:</b> ' + escapeHTML(order.delivery_address) + '</p>' : '';
+            const notes = order.customer_notes ? '<p><b>Customer notes:</b> ' + escapeHTML(order.customer_notes) + '</p>' : '';
+            const email = order.customer_email ? ' · ' + escapeHTML(order.customer_email) : '';
+            const payment = escapeHTML(order.payment_status || 'Not Started') + ' · ' + escapeHTML(order.payment_provider || 'none');
+            return '<article class="admin-booking"><div class="admin-booking-head"><div><b>' + escapeHTML(order.customer_name || 'Customer') + '</b><small>' + escapeHTML(order.id) + ' · ' + escapeHTML(created) + '</small></div><strong>' + total + '</strong></div>' +
+                '<p>' + escapeHTML(order.customer_phone || '') + email + '</p><p><b>Items:</b><br>' + orderItemsLabel(order.items) + '</p>' +
+                '<p><b>Type:</b> ' + escapeHTML(order.order_type || 'nail_product') + ' · <b>Fulfilment:</b> ' + escapeHTML(order.fulfilment_type || 'not_set') + '</p>' +
+                address + notes + '<p><b>Payment:</b> ' + payment + ' <span class="muted">(online payment is not enabled)</span></p>' +
+                '<div class="admin-booking-controls"><label>Order status<select aria-label="Order status" onchange="updateStudioOrderStatus(\'' + escapeHTML(order.id) + '\',this.value)">' +
+                ['New','Contacted','Confirmed','In Progress','Ready','Completed','Cancelled'].map(status => '<option' + (order.order_status === status ? ' selected' : '') + '>' + status + '</option>').join('') +
+                '</select></label></div></article>';
+        }).join('') + '</div>' : '<div class="empty-state">No customer orders have been submitted yet.</div>') +
+        '<p class="muted admin-warning">Order details are visible only to authenticated studio administrators authorized by the Supabase booking_admins allow-list.</p></section>';
+}
+
 async function renderAdminDashboard() {
     const host=document.getElementById('adminDashboardContent');if(!host)return;
     if(window.BeautifyCloud?.configured) {
@@ -444,14 +503,31 @@ async function renderAdminDashboard() {
                 });
                 return;
             }
+            const isAdmin = await window.BeautifyCloud.isBookingAdmin();
+            if (!isAdmin) {
+                host.innerHTML = '<div class="admin-warning" role="alert"><h3>Administrator access required</h3><p>This account is signed in but is not authorized to view studio bookings or orders. Ask the studio owner to add this account to the Supabase booking_admins allow-list.</p><button class="btn btn-light" type="button" id="cloudSignOut">Sign out</button></div>';
+                document.getElementById('cloudSignOut')?.addEventListener('click', async () => { await window.BeautifyCloud.signOut(); await renderAdminDashboard(); });
+                return;
+            }
             cloudAdminBookings=(await window.BeautifyCloud.listBookings()).map(normalizeCloudBooking);
+            let orderLoadError = '';
+            try {
+                cloudAdminOrders = await window.BeautifyCloud.listOrders();
+            } catch (orderError) {
+                cloudAdminOrders = [];
+                orderLoadError = orderError.message || 'Could not load orders.';
+                console.error('Studio orders could not load:', orderError);
+            }
             if(!cloudBookingsSubscription) cloudBookingsSubscription=window.BeautifyCloud.subscribeBookings(()=>{renderAdminDashboard();});
             const rows=cloudAdminBookings;
             const counts=['New','Contacted','Confirmed','Completed','Cancelled'].map(status=>({status,count:rows.filter(b=>b.status===status).length}));
             host.innerHTML='<div class="admin-actions"><p class="muted">Cloud database · signed in as '+escapeHTML(session.user.email||'administrator')+'</p><button class="btn btn-light" type="button" id="cloudSignOut">Sign out</button></div><div class="admin-summary">'+counts.map(x=>'<div class="admin-stat"><span>'+x.status+'</span><strong>'+x.count+'</strong></div>').join('')+'</div><div class="admin-actions"><p class="muted">'+rows.length+' booking record(s) in Supabase.</p><button class="btn btn-outline" type="button" onclick="exportBookingsCSV()">Export CSV</button></div>'+
             (rows.length?'<div class="admin-bookings">'+rows.map(b=>'<article class="admin-booking"><div class="admin-booking-head"><div><b>'+escapeHTML(b.name)+'</b><small>'+escapeHTML(b.id)+' · '+escapeHTML(new Date(b.createdAt).toLocaleString('en-IN'))+'</small></div><strong>'+formatINR(b.offerTotal)+'</strong></div><p>'+escapeHTML(b.event)+' · '+escapeHTML(b.date)+' · '+escapeHTML(b.time)+'</p><p>'+escapeHTML(b.phone)+' · '+escapeHTML(b.location)+'</p><p>'+escapeHTML((b.services||[]).map(x=>x.name).join(', '))+'</p>'+(b.notes?'<p class="muted">Notes: '+escapeHTML(b.notes)+'</p>':'')+'<div class="admin-booking-controls"><label>Status<select aria-label="Booking status" onchange="updateBookingStatus(\''+escapeHTML(b.id)+'\',this.value)">'+['New','Contacted','Confirmed','Completed','Cancelled'].map(st=>'<option'+(b.status===st?' selected':'')+'>'+st+'</option>').join('')+'</select></label><button class="btn btn-light" type="button" onclick="deleteBooking(\''+escapeHTML(b.id)+'\')">Delete</button></div></article>').join('')+'</div>':'<div class="empty-state">No cloud booking requests yet.</div>')+
             '<p class="muted admin-warning">Bookings are stored in Supabase. Only authenticated users added to the booking_admins allow-list can view or manage them.</p>';
-            document.getElementById('cloudSignOut')?.addEventListener('click',async()=>{try{if(cloudBookingsSubscription){cloudBookingsSubscription();cloudBookingsSubscription=null;}await window.BeautifyCloud.signOut();await renderAdminDashboard();}catch(error){alert(error.message);}});
+            host.innerHTML += orderLoadError
+                ? '<section class="panel admin-warning" role="alert"><h3>Studio Orders could not load</h3><p>' + escapeHTML(orderLoadError) + '</p><p>Confirm that supabase/orders-schema.sql has been applied and that the signed-in account is an authorized administrator.</p></section>'
+                : renderStudioOrders(cloudAdminOrders);
+            document.getElementById('cloudSignOut')?.addEventListener('click',async()=>{try{if(cloudBookingsSubscription){cloudBookingsSubscription();cloudBookingsSubscription=null;}await window.BeautifyCloud.signOut();cloudAdminOrders=[];await renderAdminDashboard();}catch(error){alert(error.message);}});
         } catch(error) {
             host.innerHTML='<p class="admin-warning" role="alert">Cloud dashboard could not load. Verify the Supabase URL/key, SQL schema and administrator allow-list. '+escapeHTML(error.message)+'</p>';
             console.error(error);
