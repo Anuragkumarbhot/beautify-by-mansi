@@ -1,0 +1,20 @@
+{
+  "id": "./the-beauty-edit.html",
+  "name": "Beautify by Mansi",
+  "short_name": "Beautify",
+  "description": "Press-on nails and makeup experiences by Beautify by Mansi.",
+  "start_url": "./the-beauty-edit.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fcf9f6",
+  "theme_color": "#241b25",
+  "icons": [
+    {
+      "src": "./assets/icons/beautify-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
