@@ -176,7 +176,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.m
   lookButtons.forEach(button=>button.addEventListener('click',()=>applyLook(button.dataset.makeupLook)));
   applyLook(active);
 
-  let pointerX=0,pointerY=0,visible=true,raf=0;
+  let pointerX=0,pointerY=0,visible=!document.hidden,raf=0;\n  const visibilityObserver = 'IntersectionObserver' in window ? new IntersectionObserver(entries=>{visible=entries[0]?.isIntersecting===true&&!document.hidden;},{rootMargin:'120px'}) : null;\n  visibilityObserver?.observe(host);
   host.addEventListener('pointermove',event=>{
     const rect=host.getBoundingClientRect();
     pointerX=(event.clientX-rect.left)/rect.width-.5;
@@ -194,7 +194,7 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.m
   const observer=new ResizeObserver(resize);
   observer.observe(host);
   resize();
-  document.addEventListener('visibilitychange',()=>{visible=!document.hidden;});
+  document.addEventListener('visibilitychange',()=>{visible=!document.hidden&&(!visibilityObserver||host.getBoundingClientRect().bottom>0&&host.getBoundingClientRect().top<window.innerHeight+120);});
   const animate=()=>{
     raf=requestAnimationFrame(animate);
     if(!visible) return;
@@ -207,5 +207,5 @@ import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.166.1/build/three.m
     renderer.render(scene,camera);
   };
   animate();
-  window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);observer.disconnect();renderer.dispose();},{once:true});
+  window.addEventListener('pagehide',()=>{cancelAnimationFrame(raf);observer.disconnect();visibilityObserver?.disconnect();renderer.dispose();},{once:true});
 })();
