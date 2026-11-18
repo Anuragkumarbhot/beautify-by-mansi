@@ -49,6 +49,7 @@ if(host){
  }
  function updateSelectionLabel(){const el=document.getElementById('nailSelectedLabel');if(el)el.textContent=selectedFinger===null?'Editing all 10 nails':fingerNames[selectedFinger%5]+' · '+(selectedFinger<5?'Left hand':'Right hand')+' selected';}
  function applySetting(key,value){settings[key]=value;if(selectedFinger===null)perNail=perNail.map(n=>({...n,[key]:value}));else perNail[selectedFinger]={...perNail[selectedFinger],[key]:value};rebuild();}
+ document.getElementById('nailEditAll')?.addEventListener('click',()=>{selectedFinger=null;rebuild()});
  const raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();renderer.domElement.addEventListener('pointerdown',event=>{const rect=renderer.domElement.getBoundingClientRect();pointer.x=((event.clientX-rect.left)/rect.width)*2-1;pointer.y=-((event.clientY-rect.top)/rect.height)*2+1;raycaster.setFromCamera(pointer,camera);const hit=raycaster.intersectObjects(fingerGroups,true)[0];if(hit){let obj=hit.object;while(obj&&obj.userData.nailIndex===undefined)obj=obj.parent;if(obj){selectedFinger=obj.userData.nailIndex;rebuild();}}});
  function resize(){const w=Math.max(host.clientWidth,1),h=Math.max(host.clientHeight,1);camera.aspect=w/h;camera.updateProjectionMatrix();renderer.setSize(w,h,false)}
  const observer=new ResizeObserver(resize);observer.observe(host);resize();rebuild();
