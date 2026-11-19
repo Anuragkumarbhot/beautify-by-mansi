@@ -53,6 +53,7 @@ Recommended V2 tables (names can be finalized during the migration review):
 | appointment_service_areas | Home-service coverage | id, name, pincode, is_active, travel_buffer_minutes |
 | appointment_bookings | Appointment header | id, reference, customer fields, location_type, address/area, starts_at, ends_at, status, payment_status, timestamps |
 | appointment_booking_items | Services captured at booking time | booking_id, service_id, service_name_snapshot, duration_snapshot, price_snapshot |
+| appointment_booking_resources | Resources locked by a booking | booking_id, resource_id, reserved_from, reserved_to |
 | appointment_audit_events | Booking and admin activity | actor, action, booking id, timestamp, minimal metadata |
 
 ### Time and duration calculation
@@ -66,7 +67,7 @@ Recommended V2 tables (names can be finalized during the migration review):
 
 ### Resource assignment
 
-For the first release, model Mansi and any other bookable staff as appointment_resources. A studio appointment reserves both the assigned staff resource and, if room capacity becomes relevant, a studio resource. A home appointment reserves the assigned staff resource. The data model can support multiple staff later without changing the customer flow.
+For the first release, model Mansi and any other bookable staff as appointment_resources. A studio appointment reserves the assigned staff resource and, where room capacity is configured, a studio/room resource too. A home appointment reserves the assigned staff resource. Each booking-to-resource reservation is stored in appointment_booking_resources; put the GiST overlap exclusion constraint on that reservation table, not on the booking header. This permits one booking to lock more than one resource atomically and prevents a staff member or room from being double-booked.
 
 If no suitable active resource is configured for a service/location combination, return no slots rather than inventing availability.
 
@@ -91,7 +92,7 @@ Availability reads are advisory. On submission, the database must perform a fina
 - lock the relevant resource/day or use an equivalent concurrency-safe reservation operation;
 - revalidate active services, duration, location coverage and working window;
 - insert the booking and all booking items;
-- rely on a PostgreSQL GiST exclusion constraint over resource_id and time range for non-cancelled bookings as a final overlap guard;
+- insert one appointment_booking_resources row for every required staff/room resource and rely on a PostgreSQL GiST exclusion constraint over resource_id and reserved time range for non-cancelled bookings as a final overlap guard;
 - roll back all inserts if any check or constraint fails.
 
 Return a conflict response (HTTP 409) when another customer wins the same slot. The customer can then select a new slot. The transaction must be idempotent for a client-generated request key so retries do not create duplicate appointments.
