@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const services = [
   {
     title: "Makeup Artistry",
@@ -20,13 +22,13 @@ export default function HomePage() {
   return (
     <main>
       <header className="site-header">
-        <a className="wordmark" href="/" aria-label="Beautify by Mansi home">
+        <Link className="wordmark" href="/" aria-label="Beautify by Mansi home">
           BEAUTIFY <span>by Mansi</span>
-        </a>
+        </Link>
         <nav aria-label="Main navigation">
           <a href="#services">Services</a>
-          <a href="/shop">Shop nails</a>
-          <a href="/book">Appointments</a>
+          <Link href="/shop">Shop nails</Link>
+          <Link href="/book">Appointments</Link>
         </nav>
       </header>
 
@@ -38,8 +40,8 @@ export default function HomePage() {
           designed to make every detail feel like you.
         </p>
         <div className="hero-actions">
-          <a className="button button-primary" href="/book">Enquire about an appointment</a>
-          <a className="button button-secondary" href="/shop">Explore press-on nails</a>
+          <Link className="button button-primary" href="/book">Enquire about an appointment</Link>
+          <Link className="button button-secondary" href="/shop">Explore press-on nails</Link>
         </div>
         <p className="hero-note">A new digital experience is taking shape.</p>
       </section>
@@ -55,7 +57,7 @@ export default function HomePage() {
               <p className="card-index">0{services.indexOf(service) + 1}</p>
               <h3>{service.title}</h3>
               <p>{service.description}</p>
-              <a href={service.href}>Discover more <span aria-hidden="true">↗</span></a>
+              <Link href={service.href}>Discover more <span aria-hidden="true">↗</span></Link>
             </article>
           ))}
         </div>
