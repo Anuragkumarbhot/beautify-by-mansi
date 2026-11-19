@@ -2,11 +2,19 @@
   "name": "beautify-by-mansi",
   "version": "1.0.0",
   "private": true,
-  "description": "Beautify by Mansi booking, pricing and beauty services web app",
+  "description": "Beautify by Mansi V1 site and V2 application workspace",
+  "workspaces": [
+    "apps/web"
+  ],
   "scripts": {
-    "test": "node --test"
+    "test": "node --test",
+    "dev:web": "npm run dev --workspace @beautify-by-mansi/web",
+    "build:web": "npm run build --workspace @beautify-by-mansi/web",
+    "start:web": "npm run start --workspace @beautify-by-mansi/web",
+    "lint:web": "npm run lint --workspace @beautify-by-mansi/web",
+    "typecheck:web": "npm run typecheck --workspace @beautify-by-mansi/web"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=20"
   }
 }

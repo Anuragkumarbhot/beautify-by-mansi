@@ -1,0 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+  --wine: #4a1830;
+  --rose: #b76e79;
+  --champagne: #d8c3a5;
+  --ivory: #faf7f2;
+  --ink: #211820;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  margin: 0;
+  background: var(--ivory);
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+}
+a { color: inherit; text-decoration: none; }
+.site-header {
+  min-height: 76px;
+  padding: 0 7vw;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(74, 24, 48, .12);
+}
+.wordmark { color: var(--wine); font-size: 14px; font-weight: 700; letter-spacing: .18em; }
+.wordmark span { display: inline-block; margin-left: 5px; color: var(--rose); font-family: Georgia, serif; font-size: 17px; font-style: italic; font-weight: 400; letter-spacing: 0; }
+.site-header nav { display: flex; gap: 28px; color: #654d58; font-size: 12px; }
+.site-header nav a:hover, .service-card a:hover { color: var(--rose); }
+.hero { padding: clamp(90px, 13vw, 170px) 8vw 120px; background: radial-gradient(ellipse at 78% 24%, rgba(183,110,121,.13), transparent 35%), var(--ivory); }
+.eyebrow { color: var(--rose); font-size: 10px; font-weight: 700; letter-spacing: .24em; }
+.hero h1 { max-width: 850px; margin: 24px 0; color: var(--wine); font-family: Georgia, serif; font-size: clamp(52px, 8vw, 104px); font-weight: 400; letter-spacing: -.055em; line-height: .98; }
+.hero h1 em { color: var(--rose); font-weight: 400; }
+.hero-copy { max-width: 490px; color: #725f68; font-family: Georgia, serif; font-size: 18px; line-height: 1.7; }
+.hero-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 34px; }
+.button { min-height: 48px; display: inline-flex; align-items: center; justify-content: center; padding: 0 20px; font-size: 11px; letter-spacing: .04em; }
+.button-primary { background: var(--wine); color: white; }
+.button-primary:hover { background: #672746; }
+.button-secondary { border: 1px solid rgba(74,24,48,.28); color: var(--wine); }
+.hero-note { margin-top: 42px; color: #9a8790; font-size: 10px; letter-spacing: .08em; }
+.services { padding: 90px 8vw 110px; background: #fffdf9; }
+.section-heading h2 { margin: 14px 0 38px; color: var(--wine); font-family: Georgia, serif; font-size: clamp(32px, 4vw, 52px); font-weight: 400; }
+.service-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 18px; }
+.service-card { min-height: 230px; padding: 26px; border: 1px solid rgba(74,24,48,.13); background: #fff; }
+.card-index { color: var(--champagne); font-family: Georgia, serif; font-size: 20px; }
+.service-card h3 { margin: 28px 0 10px; color: var(--wine); font-family: Georgia, serif; font-size: 24px; font-weight: 400; }
+.service-card p:not(.card-index) { min-height: 48px; color: #806e77; font-size: 13px; line-height: 1.6; }
+.service-card a { display: inline-block; margin-top: 16px; color: var(--wine); font-size: 11px; }
+.site-footer { display: flex; justify-content: space-between; padding: 26px 8vw; color: #8a7780; font-size: 10px; }
+@media (max-width: 700px) {
+  .site-header { padding: 18px 6vw; align-items: flex-start; gap: 18px; flex-direction: column; }
+  .site-header nav { flex-wrap: wrap; gap: 18px; }
+  .hero { padding: 86px 7vw 90px; }
+  .service-grid { grid-template-columns: 1fr; }
+  .services { padding: 70px 7vw; }
+  .site-footer { padding: 24px 7vw; flex-direction: column; gap: 8px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+}
