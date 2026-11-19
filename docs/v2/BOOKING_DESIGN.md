@@ -1,6 +1,6 @@
 # V2 Automatic Appointment Booking — Technical Design
 
-Status: approved product direction; technical design only. This document does not claim that automatic booking, live availability, or customer notifications have been implemented or deployed.
+Status: approved product direction. Phase A migration 007 is committed to the V2 branch, but it has not been applied to Supabase or live-tested. Availability, booking APIs, customer booking screens and notifications are not yet implemented.
 
 ## 1. Product decision
 
@@ -41,12 +41,15 @@ The V1 schema does not have resource calendars, weekly availability rules, servi
 
 ## 4. Domain model
 
-Recommended V2 tables (names can be finalized during the migration review):
+V2 table names adopted by migration 007:
 
 | Table | Purpose | Key fields |
 |---|---|---|
+| appointment_staff_members | Authorized appointment staff | user_id, role, is_active |
+| appointment_booking_settings | Singleton booking switch and operational limits | timezone_name, minimum_notice_minutes, booking_horizon_days, public_booking_enabled |
 | appointment_services | Bookable services and package rules | id, slug, name, duration_minutes, buffer_before_minutes, buffer_after_minutes, price_amount, currency, supports_studio, supports_home, is_active |
 | appointment_resources | Staff, artist or reservable studio resource | id, display_name, resource_type, is_active |
+| appointment_resource_services | Which staff resources can deliver which services at each location | resource_id, service_id, location_type |
 | appointment_resource_services | Which resources can deliver which services | resource_id, service_id |
 | appointment_availability_rules | Recurring working windows | resource_id, location_type, weekday, opens_at, closes_at, slot_interval_minutes, effective_from, effective_until, is_active |
 | appointment_blackouts | Leave, breaks, holidays and blocked windows | resource_id, starts_at, ends_at, reason |
@@ -179,11 +182,10 @@ Staff should be able to view the appointment details they need, confirm contact 
 ## 10. Implementation sequence
 
 ### Phase A — Configuration and data model
-- Confirm the actual bookable service list and supported locations.
-- Enter duration and buffer values for every bookable service.
-- Configure staff/resources, weekly schedules, breaks and blackout dates.
-- Configure supported home-service pincodes and travel buffers.
-- Add a new ordered Supabase migration for V2 appointment tables, indexes, constraints and RLS.
+- Committed supabase/migrations/007_v2_appointment_booking.sql with the V2 appointment tables, indexes, constraints, staff membership, RLS policies, cancellation release trigger and resource-overlap exclusion constraint.
+- Added a disabled singleton booking setting using Asia/Kolkata; no business hours, staff, service prices/durations or pincodes are fabricated or seeded.
+- Added migration instructions and schema verification queries to supabase/SETUP.md.
+- Still required: apply migration 007 to Supabase, provision the studio owner, and configure actual services, resources, working hours, blackout periods and home-service pincodes.
 
 ### Phase B — Availability API
 - Implement the server-side slot generator.
@@ -239,4 +241,4 @@ Until these values are entered and verified, the booking UI should report that s
 
 ## 13. Current implementation status
 
-Not yet implemented in V2: booking tables/migration, availability engine, booking APIs, customer booking UI, staff calendar, notification integration and live payment flow. This document records the approved direction and implementation sequence, not a live booking capability.
+Phase A repository work: migration 007 and its setup instructions are committed, but the migration has not been applied to Supabase or verified against the live database. The availability engine, transactional booking APIs, customer booking UI, staff calendar, notification integration and live payment flow are not yet implemented. Public booking remains disabled. This document records the approved direction and repository artifacts, not a live booking capability.

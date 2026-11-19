@@ -173,3 +173,88 @@ Apply `supabase/migrations/006_multi_profile_workspace.sql` after migration 005.
 7. Test concurrent create requests near the limit; the final profile count must never exceed the account's plan limit.
 
 The current Studio supports profile switching and creation, but does not yet provide team member roles, staff seat management, bulk profile import, or shared subscription pooling. Profile access remains independently billed per profile. No live Supabase integration test has been performed.
+
+## 11. V2 automatic appointment booking foundation (migration 007)
+
+V2 appointment data is separate from the existing V1 public.bookings enquiry table. Keep the V1 booking page and table unchanged while the new booking flow is developed.
+
+### Apply the migration
+
+1. Back up the Supabase project before applying schema changes.
+2. Confirm migrations 001–006 have been applied in sequence.
+3. Open Supabase Dashboard → SQL Editor.
+4. Run the complete file supabase/migrations/007_v2_appointment_booking.sql.
+5. Confirm that the V2 tables exist and RLS is enabled.
+6. Do not enable public booking yet. The seeded singleton row in appointment_booking_settings deliberately has public_booking_enabled = false.
+
+The migration creates:
+- Staff membership and a server-checkable is_appointment_staff() helper.
+- A booking settings row using Asia/Kolkata, with booking disabled.
+- Service catalogue, staff/studio resources and service-to-resource mappings.
+- Studio/home weekly availability rules, blackout periods and home-service pincode coverage.
+- Appointment headers, service snapshots, resource reservation intervals and audit events.
+- A GiST exclusion constraint that prevents active reservations for the same resource from overlapping.
+- A cancellation trigger that releases reserved resource intervals in the same database transaction.
+- RLS policies. Anonymous visitors can read active service summaries and active service-area pincodes, but cannot read appointment records or write bookings.
+
+### Provision the studio owner
+
+Create the intended staff account using Supabase Authentication first. Then provision that exact account in SQL Editor:
+
+```sql
+insert into public.appointment_staff_members (user_id, role, is_active)
+select id, 'owner', true
+from auth.users
+where email = 'YOUR-OWNER-EMAIL'
+on conflict (user_id) do update
+set role = excluded.role,
+    is_active = true;
+```
+
+Do not create staff membership from the browser. Only a trusted database administrator should assign the initial owner or later staff roles.
+
+### Configure before enabling bookings
+
+No staff, services, durations, prices, weekly hours, blackout dates, pincode areas or travel buffers are seeded by the migration. Enter and verify those business values before enabling appointments. In particular:
+- Each bookable service needs a real duration and before/after buffers.
+- Each staff/resource record must be explicitly activated and mapped to the services and location types it can deliver.
+- Weekly rules must reflect actual local working hours; use separate rows for separate windows.
+- Home-service areas must use the correct six-digit pincode and a configured travel buffer.
+- Configure minimum booking notice and booking horizon in appointment_booking_settings.
+
+Keep public_booking_enabled = false until the availability API, transactional booking endpoint, customer flow, staff calendar and RLS/concurrency tests are complete. This migration alone does not create a working booking website or expose a public booking API.
+
+### Basic schema verification
+
+After applying the migration, run:
+
+```sql
+select
+  to_regclass('public.appointment_services') as appointment_services,
+  to_regclass('public.appointment_availability_rules') as availability_rules,
+  to_regclass('public.appointment_bookings') as appointment_bookings,
+  to_regclass('public.appointment_booking_resources') as appointment_booking_resources;
+
+select
+  relname,
+  relrowsecurity
+from pg_class
+where relnamespace = 'public'::regnamespace
+  and relname like 'appointment_%'
+order by relname;
+
+select conname
+from pg_constraint
+where conrelid = 'public.appointment_booking_resources'::regclass
+  and contype = 'x';
+```
+
+Expected: the listed tables exist, RLS is enabled on all appointment_* tables, and the resource reservation exclusion constraint is present.
+
+### Operational and security boundaries
+
+- The migration has been committed to GitHub but has not been applied to the connected Supabase project from this workflow.
+- No public booking insert policy or browser write grant is added. Booking creation will be implemented through a validated server-side transaction in the next phase.
+- Customer-owned booking reads are available only for authenticated bookings where customer_user_id is set; guest confirmation access requires a separate secure token flow.
+- Direct changes to an appointment's time, location or service address are rejected. Rescheduling must be implemented as one transactional operation that replaces resource reservations safely.
+- Do not put a Supabase service-role key in browser code, public environment variables or GitHub.
