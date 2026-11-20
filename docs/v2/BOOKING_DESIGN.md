@@ -50,7 +50,6 @@ V2 table names adopted by migration 007:
 | appointment_services | Bookable services and package rules | id, slug, name, duration_minutes, buffer_before_minutes, buffer_after_minutes, price_amount, currency, supports_studio, supports_home, is_active |
 | appointment_resources | Staff, artist or reservable studio resource | id, display_name, resource_type, is_active |
 | appointment_resource_services | Which staff resources can deliver which services at each location | resource_id, service_id, location_type |
-| appointment_resource_services | Which resources can deliver which services | resource_id, service_id |
 | appointment_availability_rules | Recurring working windows | resource_id, location_type, weekday, opens_at, closes_at, slot_interval_minutes, effective_from, effective_until, is_active |
 | appointment_blackouts | Leave, breaks, holidays and blocked windows | resource_id, starts_at, ends_at, reason |
 | appointment_service_areas | Home-service coverage | id, name, pincode, is_active, travel_buffer_minutes |
@@ -188,10 +187,12 @@ Staff should be able to view the appointment details they need, confirm contact 
 - Still required: apply migration 007 to Supabase, provision the studio owner, and configure actual services, resources, working hours, blackout periods and home-service pincodes.
 
 ### Phase B — Availability API
-- Implement the server-side slot generator.
-- Add tests for working windows, duration, buffers, home-service areas, blackouts and existing reservations.
-- Implement atomic booking RPC/transaction with overlap protection and idempotency.
-- Add concurrency tests where two requests attempt the same resource and slot.
+- Committed supabase/migrations/008_v2_booking_api.sql with get_appointment_availability and create_appointment_booking functions.
+- Added Next.js GET /api/booking/services and GET /api/booking/availability routes.
+- Added Next.js POST /api/bookings with Zod request validation and idempotency-key support.
+- The reservation function revalidates service configuration, home-service coverage, staff mappings, working rules, blackouts and current reservations inside its database transaction.
+- Resource-config changes serialize with reservations; the exclusion constraint remains the final guard against concurrent overlapping bookings.
+- The migration and routes are not yet verified against the live Supabase database. Automated concurrency/integration tests against the configured project remain required.
 
 ### Phase C — Customer booking UX
 - Build /services, /services/[slug], /book and confirmation.
@@ -241,4 +242,4 @@ Until these values are entered and verified, the booking UI should report that s
 
 ## 13. Current implementation status
 
-Phase A repository work: migration 007 and its setup instructions are committed, but the migration has not been applied to Supabase or verified against the live database. The availability engine, transactional booking APIs, customer booking UI, staff calendar, notification integration and live payment flow are not yet implemented. Public booking remains disabled. This document records the approved direction and repository artifacts, not a live booking capability.
+Phase A and B repository work: migrations 007–008 and the availability/booking API routes are committed, but have not been applied to or verified against the live Supabase database. The customer booking UI, staff calendar, secure guest self-service token, distributed rate limiting/CAPTCHA, notifications and live payment flow are not yet implemented. Phase B currently allocates one staff resource; studio-room allocation is not implemented. Public booking remains disabled. This document records repository artifacts, not a live booking capability.

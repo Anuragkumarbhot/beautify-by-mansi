@@ -258,3 +258,60 @@ Expected: the listed tables exist, RLS is enabled on all appointment_* tables, a
 - Customer-owned booking reads are available only for authenticated bookings where customer_user_id is set; guest confirmation access requires a separate secure token flow.
 - Direct changes to an appointment's time, location or service address are rejected. Rescheduling must be implemented as one transactional operation that replaces resource reservations safely.
 - Do not put a Supabase service-role key in browser code, public environment variables or GitHub.
+## 12. V2 availability and booking API (migration 008)
+
+Apply `supabase/migrations/008_v2_booking_api.sql` only after migration 007.
+
+Migration 008:
+- Adds `get_appointment_availability(date, location, service_ids, pincode)`, which returns safe start/end instants and an availability count without exposing staff identities or customer records.
+- Adds `create_appointment_booking(...)`, which validates active services, location eligibility, home-service coverage, booking settings and exact slot availability.
+- Rechecks service configuration, home-service coverage, staff mappings, resource schedules, blackouts and existing reservations immediately before reservation.
+- Serializes retries using the client idempotency UUID.
+- Relies on the GiST exclusion constraint from migration 007 to reject overlapping reservations even under concurrent requests.
+- Maps a race-condition exclusion failure to a slot-unavailable error.
+- Creates a confirmed appointment and service snapshots atomically; payment status remains `not_required`.
+- Adds resource-configuration lock triggers so staff schedule/mapping/blackout edits serialize with booking reservation.
+- Extends generated booking references to a longer random suffix.
+
+### V2 API routes
+
+The Next.js app exposes:
+- `GET /api/booking/services` — active public service catalogue.
+- `GET /api/booking/availability?date=YYYY-MM-DD&location=studio|home&serviceIds=UUID,UUID&postalCode=...` — available slots.
+- `POST /api/bookings` — validated booking creation. Include a UUID `idempotencyKey`, selected service IDs, an ISO date-time with timezone offset, location type, customer details, event type, and home address fields when location is `home`.
+
+The API uses `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` to call the restricted PostgreSQL functions. It does not use or expose the service-role key. The database function is the authoritative validation and transaction boundary; browser values are not authoritative for price, duration or availability.
+
+### Configure safely
+
+1. Apply migrations 007 and 008 in order.
+2. Configure a non-null `minimum_notice_minutes` and `booking_horizon_days` in `appointment_booking_settings`.
+3. Configure at least one active bookable service with its real duration and location eligibility.
+4. Configure an active staff resource, map it to the selected service/location, and add an accurate active weekly availability rule in Asia/Kolkata.
+5. For home service, add an active six-digit pincode area and travel buffer.
+6. Test the availability API. It should return an empty slot array until all required records and schedules exist.
+7. Do not set `public_booking_enabled = true` until staff, schedules, areas, concurrency, abuse protection and customer confirmation handling have been reviewed.
+
+### Example availability call
+
+```text
+GET /api/booking/availability?date=2026-12-10&location=studio&serviceIds=SERVICE_UUID
+```
+
+For home service, also pass a six-digit `postalCode`. Use the actual UUIDs from `appointment_services`, not the example placeholder.
+
+### Booking response and limitations
+
+A successful `POST /api/bookings` returns a booking reference, start/end times, location type, `confirmed` status and `paymentStatus: not_required`. The idempotency key returns the same booking reference if the same request is retried. A slot conflict returns HTTP 409.
+
+The guest booking response is returned immediately to the submitting browser. A secure guest self-service retrieval/cancellation token is not included yet; do not expose a public booking lookup by reference alone. Authenticated booking reads remain limited to the owning account or authorized staff.
+
+Phase B currently allocates one staff resource per appointment. The schema supports studio-room resources, but room selection/reservation is not yet implemented; do not configure studio-room capacity as a booking constraint until that is added.
+
+### Production safeguards still required
+
+- Add edge/WAF rate limiting and bot protection/CAPTCHA before enabling public anonymous booking. The Next.js API routes do not implement a distributed rate limiter.
+- Add secure guest confirmation/retrieval and cancellation tokens before offering guest self-service.
+- Test two simultaneous requests for the same resource and overlapping intervals against the actual Supabase project.
+- Confirm that database migrations 007–008 are applied and functions are visible before testing the Next.js routes.
+- Keep the public booking switch disabled until the business configuration and safeguards are complete.
