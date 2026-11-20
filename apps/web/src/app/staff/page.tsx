@@ -247,7 +247,7 @@ export default function StaffAppointmentsPage() {
             </div>
             <div className="staff-summary">
               <strong>{activeCount}</strong>
-              <span>confirmed today</span>
+              <span>confirmed on selected day</span>
             </div>
           </div>
 

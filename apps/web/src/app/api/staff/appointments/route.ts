@@ -28,14 +28,10 @@ export async function GET(request: NextRequest) {
 
   const query = new URLSearchParams({
     select: "id,reference,customer_name,customer_phone,customer_email,event_type,location_type,address_line1,address_line2,locality,postal_code,address_city,address_state,starts_at,ends_at,status,payment_status,customer_notes,appointment_booking_items(service_name_snapshot,duration_snapshot_minutes,unit_price_snapshot_amount)",
-    starts_at: "gte." + from.data,
     order: "starts_at.asc",
     limit: "250",
   });
-  query.set("starts_at", "gte." + from.data);
-  query.set("ends_at", "gt." + from.data);
-  // A starts_at upper bound is applied separately to keep the range index useful.
-  query.set("and", "(starts_at.lt." + to.data + ",starts_at.gte." + from.data + ")");
+  query.set("and", "(starts_at.gte." + from.data + ",starts_at.lt." + to.data + ")");
   if (status.data !== "all") query.set("status", "eq." + status.data);
 
   try {
