@@ -137,33 +137,11 @@ begin
     and br.is_active = true
   limit 1;
 
-  perform 1
-  from public.appointment_resources r
-  where r.id = v_resource_id
-    and r.resource_type = 'staff'
-    and r.is_active = true
-  for update;
-
-  if not found then
-    raise exception using errcode = 'P0001', message = 'APPOINTMENT_RESOURCE_UNAVAILABLE';
-  end if;
-
-  select
-    count(distinct rs.service_id)::integer
-  into v_mapped_count
-  from public.appointment_resource_services rs
-  where rs.resource_id = v_resource_id
-    and rs.location_type = v_booking.location_type
-    and rs.service_id = any(v_service_ids);
-
-  if v_mapped_count <> cardinality(v_service_ids) then
-    raise exception using errcode = 'P0001', message = 'APPOINTMENT_RESOURCE_SERVICE_MAPPING_CHANGED';
-  end if;
-
   select s.timezone_name, s.minimum_notice_minutes, s.booking_horizon_days
     into v_timezone, v_minimum_notice, v_booking_horizon
   from public.appointment_booking_settings s
-  where s.id = 1;
+  where s.id = 1
+  for share;
 
   if not found or v_timezone is null
     or not exists (select 1 from pg_timezone_names z where z.name = v_timezone)
@@ -172,12 +150,34 @@ begin
     raise exception using errcode = 'P0001', message = 'BOOKING_SETTINGS_INCOMPLETE';
   end if;
 
+  perform 1
+  from public.appointment_services s
+  where s.id = any(v_service_ids)
+  order by s.id
+  for share;
+
+  select count(distinct s.id)::integer
+    into v_service_count
+  from public.appointment_services s
+  where s.id = any(v_service_ids)
+    and s.is_active = true
+    and case
+      when v_booking.location_type = 'studio' then s.supports_studio
+      when v_booking.location_type = 'home' then s.supports_home
+      else false
+    end;
+
+  if v_service_count <> cardinality(v_service_ids) then
+    raise exception using errcode = 'P0001', message = 'APPOINTMENT_SERVICE_NOT_BOOKABLE';
+  end if;
+
   if v_booking.service_area_id is not null then
     select a.travel_buffer_minutes
       into v_travel_buffer
     from public.appointment_service_areas a
     where a.id = v_booking.service_area_id
-      and a.is_active = true;
+      and a.is_active = true
+    for share;
 
     if not found then
       raise exception using errcode = 'P0001', message = 'HOME_SERVICE_AREA_UNAVAILABLE';
@@ -196,10 +196,37 @@ begin
     raise exception using errcode = 'P0001', message = 'RESCHEDULE_OUTSIDE_ALLOWED_WINDOW';
   end if;
 
-  -- Confirm the original assigned staff member can still deliver every
-  -- snapshot service at the requested slot and that the slot aligns to their
-  -- configured grid. The resource row lock serializes this with new bookings
-  -- and staff schedule edits.
+  -- Match the booking transaction's lock order: acquire the per-window
+  -- advisory lock before locking the resource row. This avoids a cycle with
+  -- concurrent creates, which also take the advisory lock before FOR SHARE.
+  perform pg_advisory_xact_lock(
+    hashtextextended(v_resource_id::text || '|' || v_reserved_from::text, 2)
+  );
+
+  perform 1
+  from public.appointment_resources r
+  where r.id = v_resource_id
+    and r.resource_type = 'staff'
+    and r.is_active = true
+  for update;
+
+  if not found then
+    raise exception using errcode = 'P0001', message = 'APPOINTMENT_RESOURCE_UNAVAILABLE';
+  end if;
+
+  select count(distinct rs.service_id)::integer
+    into v_mapped_count
+  from public.appointment_resource_services rs
+  where rs.resource_id = v_resource_id
+    and rs.location_type = v_booking.location_type
+    and rs.service_id = any(v_service_ids);
+
+  if v_mapped_count <> cardinality(v_service_ids) then
+    raise exception using errcode = 'P0001', message = 'APPOINTMENT_RESOURCE_SERVICE_MAPPING_CHANGED';
+  end if;
+
+  -- The resource row lock serializes this check with mapping, schedule and
+  -- blackout configuration changes.
   if not exists (
     select 1
     from public.appointment_availability_rules ar
@@ -247,10 +274,6 @@ begin
     raise exception using errcode = 'P0001', message = 'SLOT_UNAVAILABLE';
   end if;
 
-  perform pg_advisory_xact_lock(
-    hashtextextended(v_resource_id::text || '|' || v_reserved_from::text, 2)
-  );
-
   perform set_config('app.allow_appointment_reschedule', 'on', true);
 
   update public.appointment_bookings b
@@ -276,7 +299,7 @@ $function$;
 revoke all on function public.reschedule_appointment_booking(uuid, timestamptz)
   from public, anon;
 grant execute on function public.reschedule_appointment_booking(uuid, timestamptz)
-  to authenticated, service_role;
+  to authenticated;
 
 comment on function public.reschedule_appointment_booking(uuid, timestamptz) is
   'Staff-only transactional time change. Preserves original service snapshots, location and staff resource; RLS/JWT and trigger safeguards remain authoritative.';
