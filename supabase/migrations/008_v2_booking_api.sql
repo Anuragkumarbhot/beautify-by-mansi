@@ -146,9 +146,9 @@ begin
      and (ar.effective_from is null or p_date >= ar.effective_from)
      and (ar.effective_until is null or p_date <= ar.effective_until)
     cross join lateral generate_series(
-      ((p_date::timestamp + ar.opens_at) at time zone ar.timezone_name)
+      ((p_date + ar.opens_at) at time zone ar.timezone_name)
         + make_interval(mins => v_buffer_before + v_travel_buffer),
-      ((p_date::timestamp + ar.closes_at) at time zone ar.timezone_name)
+      ((p_date + ar.closes_at) at time zone ar.timezone_name)
         - make_interval(mins => v_duration + v_buffer_after + v_travel_buffer),
       make_interval(mins => ar.slot_interval_minutes)
     ) as gs(slot_start)
@@ -482,8 +482,8 @@ begin
       and ar.timezone_name = v_timezone
       and (ar.effective_from is null or v_local_date >= ar.effective_from)
       and (ar.effective_until is null or v_local_date <= ar.effective_until)
-      and v_reserved_from >= ((v_local_date::timestamp + ar.opens_at) at time zone ar.timezone_name)
-      and v_reserved_to <= ((v_local_date::timestamp + ar.closes_at) at time zone ar.timezone_name)
+      and v_reserved_from >= ((v_local_date + ar.opens_at) at time zone ar.timezone_name)
+      and v_reserved_to <= ((v_local_date + ar.closes_at) at time zone ar.timezone_name)
     for share;
     if not found then
       continue;
