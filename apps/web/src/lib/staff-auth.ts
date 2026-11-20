@@ -13,8 +13,9 @@ type AuthSession = {
 };
 
 function config() {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL?.replace(/\\/+$/, "");
+  let url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
   const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  while (url.endsWith("/")) url = url.slice(0, -1);
   if (!url || !key) throw new Error("SUPABASE_NOT_CONFIGURED");
   return { url, key };
 }

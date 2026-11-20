@@ -21,7 +21,9 @@ function getSupabaseConfig() {
     throw new Error("SUPABASE_NOT_CONFIGURED");
   }
 
-  return { url: url.replace(/\\/+$/, ""), key };
+  let normalizedUrl = url;
+  while (normalizedUrl.endsWith("/")) normalizedUrl = normalizedUrl.slice(0, -1);
+  return { url: normalizedUrl, key };
 }
 
 async function requestRest<T>(path: string, init: RequestInit, bearer: string): Promise<T> {
