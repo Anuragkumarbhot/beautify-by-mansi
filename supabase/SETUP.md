@@ -254,7 +254,7 @@ Expected: the listed tables exist, RLS is enabled on all appointment_* tables, a
 ### Operational and security boundaries
 
 - The migration has been committed to GitHub but has not been applied to the connected Supabase project from this workflow.
-- No public booking insert policy or browser write grant is added. Booking creation will be implemented through a validated server-side transaction in the next phase.
+- No direct anonymous table INSERT grant is added. Migration 008 exposes booking creation only through the validated security-definer transaction function and the Next.js API route.
 - Customer-owned booking reads are available only for authenticated bookings where customer_user_id is set; guest confirmation access requires a separate secure token flow.
 - Direct changes to an appointment's time, location or service address are rejected. Rescheduling must be implemented as one transactional operation that replaces resource reservations safely.
 - Do not put a Supabase service-role key in browser code, public environment variables or GitHub.
@@ -315,3 +315,20 @@ Phase B currently allocates one staff resource per appointment. The schema suppo
 - Test two simultaneous requests for the same resource and overlapping intervals against the actual Supabase project.
 - Confirm that database migrations 007–008 are applied and functions are visible before testing the Next.js routes.
 - Keep the public booking switch disabled until the business configuration and safeguards are complete.
+### Verify migration 008 functions
+
+After applying migration 008, run this query in SQL Editor:
+
+```sql
+select
+  p.proname,
+  p.prosecdef as security_definer,
+  has_function_privilege('anon', p.oid, 'EXECUTE') as anon_can_execute
+from pg_proc p
+join pg_namespace n on n.oid = p.pronamespace
+where n.nspname = 'public'
+  and p.proname in ('get_appointment_availability', 'create_appointment_booking')
+order by p.proname;
+```
+
+Expected: both functions appear, both are security-definer functions, and anonymous execution is granted so the public API can call them. The functions validate requests and do not expose staff identities or customer records. Keep the booking switch disabled until the application and operational checks are complete.
