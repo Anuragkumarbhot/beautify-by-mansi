@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import {
   getStaffAccessToken,
@@ -217,7 +218,7 @@ export default function StaffAppointmentsPage() {
   return (
     <main className="staff-shell">
       <header className="staff-header">
-        <a className="staff-wordmark" href="/">BEAUTIFY <span>BY MANSI</span></a>
+        <Link className="staff-wordmark" href="/">BEAUTIFY <span>BY MANSI</span></Link>
         <div className="staff-header-right">
           <span>STUDIO OPERATIONS</span>
           {accessToken ? <button type="button" className="staff-text-button" onClick={handleSignOut}>Sign out</button> : null}
@@ -247,7 +248,7 @@ export default function StaffAppointmentsPage() {
             </div>
             <div className="staff-summary">
               <strong>{activeCount}</strong>
-              <span>confirmed on selected day</span>
+              <span>confirmed in results</span>
             </div>
           </div>
 
