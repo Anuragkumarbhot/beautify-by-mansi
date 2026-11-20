@@ -7,6 +7,11 @@ type SupabaseError = {
   hint?: string | null;
 };
 
+export type SupabaseAuthUser = {
+  id: string;
+  email?: string;
+};
+
 function getSupabaseConfig() {
   const env = getPublicEnv();
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,18 +21,17 @@ function getSupabaseConfig() {
     throw new Error("SUPABASE_NOT_CONFIGURED");
   }
 
-  return { url: url.replace(/\/+$/, ""), key };
+  return { url: url.replace(/\\/+$/, ""), key };
 }
 
-export async function supabaseRest<T>(
-  path: string,
-  init: RequestInit = {}
-): Promise<T> {
+async function requestRest<T>(path: string, init: RequestInit, bearer: string): Promise<T> {
   const { url, key } = getSupabaseConfig();
   const headers = new Headers(init.headers);
   headers.set("apikey", key);
-  headers.set("Authorization", "Bearer " + key);
-  headers.set("Content-Type", "application/json");
+  headers.set("Authorization", "Bearer " + bearer);
+  if (init.body !== undefined && !headers.has("Content-Type")) {
+    headers.set("Content-Type", "application/json");
+  }
 
   const response = await fetch(url + path, {
     ...init,
@@ -54,6 +58,46 @@ export async function supabaseRest<T>(
   }
 
   return payload as T;
+}
+
+export async function supabaseRest<T>(
+  path: string,
+  init: RequestInit = {}
+): Promise<T> {
+  const { key } = getSupabaseConfig();
+  return requestRest<T>(path, init, key);
+}
+
+/** Runs a PostgREST request in the caller's authenticated JWT/RLS context. */
+export async function supabaseRestAsUser<T>(
+  path: string,
+  accessToken: string,
+  init: RequestInit = {}
+): Promise<T> {
+  return requestRest<T>(path, init, accessToken);
+}
+
+/** Validates a user access token with Supabase Auth; never trusts decoded client claims. */
+export async function supabaseAuthUser(accessToken: string): Promise<SupabaseAuthUser> {
+  const { url, key } = getSupabaseConfig();
+  const response = await fetch(url + "/auth/v1/user", {
+    headers: {
+      apikey: key,
+      Authorization: "Bearer " + accessToken,
+    },
+    cache: "no-store",
+  });
+
+  if (!response.ok) {
+    throw new Error("SUPABASE_AUTH_INVALID");
+  }
+
+  const user = (await response.json()) as SupabaseAuthUser;
+  if (!user || typeof user.id !== "string") {
+    throw new Error("SUPABASE_AUTH_INVALID");
+  }
+
+  return user;
 }
 
 export function isSupabaseNotConfigured(error: unknown) {
