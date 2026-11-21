@@ -19,7 +19,7 @@ Status: code and CI controls committed to `v2.0.0-foundation`. This is not a pro
 The CI audit reported 4 issues in the prior dependency set: 1 critical and 3 high. The patch commit updated:
 - Next.js and `eslint-config-next` to `15.5.29`.
 - Zod to `4.6.7`.
-- PostCSS to `8.5.23`.
+- PostCSS to `8.5.23`, with a root npm workspace override so the patched version is also used for Next.js' nested PostCSS dependency.
 
 These were selected from the remediation versions reported by the repository's npm audit run. The post-update audit must pass before treating the dependency remediation as complete. Continue to review subsequent audit advisories; passing one audit is time-specific.
 
