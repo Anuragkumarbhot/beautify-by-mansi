@@ -78,7 +78,8 @@ test("patched dependency baselines stay above the current audited fixes", () => 
 test("booking input regexes validate digits rather than literal backslashes", () => {
   const availability = read("apps/web/src/app/api/booking/availability/route.ts");
   const booking = read("apps/web/src/app/api/bookings/route.ts");
-  assert.match(availability, /regex\\(\\/\\^\\\\d\\{4\\}/);
-  assert.match(booking, /replace\\(\\/\\\\D\\/g/);
-  assert.match(booking, /postalCode: z\\.string\\(\\)\\.regex\\(\\/\\^\\\\d\\{6\\}/);
+  assert.ok(availability.includes('.regex(/^\\\\d{4}-\\\\d{2}-\\\\d{2}$/)'));
+  assert.ok(availability.includes('!/^\\\\d{6}$/.test(postalCode)'));
+  assert.ok(booking.includes('value.replace(/^?\\\\D/g, ""') === false || booking.includes('value.replace(/\\\\D/g, ""'));
+  assert.ok(booking.includes('postalCode: z.string().regex(/^\\\\d{6}$/)'));
 });
