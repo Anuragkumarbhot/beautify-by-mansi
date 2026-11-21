@@ -53,7 +53,7 @@ After migrations 007–011 are manually applied to the intended Supabase project
 - No live Supabase RLS or concurrency test has been performed.
 - No CAPTCHA or turnstile provider is configured.
 - IP forwarding header trust needs confirmation against the actual hosting project.
-- Guest booking retrieval and cancellation with high-entropy, one-time tokens are not implemented.
+- Guest booking retrieval and cancellation now use a high-entropy, browser-specific HttpOnly session cookie. There is no transferable one-time link or cross-device recovery flow.
 - Staff auth sessions remain browser-held bearer tokens; hardened HttpOnly-cookie/session handling and CSP nonce policy still need review.
 - Staff roles currently share the same appointment-management permission; finer-grained operational roles are not implemented.
 - Studio-room reservations and multi-resource booking allocation remain unsupported.
@@ -62,3 +62,8 @@ After migrations 007–011 are manually applied to the intended Supabase project
 ## Rollback
 
 If the V2 public API needs to be disabled, keep `public_booking_enabled = false` and remove/disable the V2 deployment. Do not re-grant anonymous RPC execution to restore functionality; use the V1 enquiry booking path while investigating. The migration is additive and does not alter the V1 `public.bookings` flow.
+
+
+## Guest booking session status
+
+Migration 012 and the customer management page now implement a server-issued 256-bit random session cookie. Only its SHA-256 digest is persisted. Guest reads and cancellations are service-role-only database RPCs; the cookie is HttpOnly, SameSite=Strict, Secure in production, and scoped to the guest-booking API path. The cancellation API checks Origin and only transitions confirmed bookings. Apply migration 012 and run the session-specific checks in `docs/v2/GUEST_BOOKING_MANAGEMENT.md` before enabling public booking.

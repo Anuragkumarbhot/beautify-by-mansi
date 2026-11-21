@@ -88,3 +88,34 @@ test("booking input regexes validate digits rather than literal backslashes", ()
   assert.ok(booking.includes('value.replace(/\\D/g, ""'));
   assert.ok(booking.includes('postalCode: z.string().regex(/^\\d{6}$/)'));
 });
+
+test("guest booking sessions store only digests and grant management RPCs to service_role", () => {
+  const migration = read("supabase/migrations/012_v2_guest_booking_sessions.sql");
+  assert.match(migration, /create table if not exists public\.appointment_guest_sessions/i);
+  assert.match(migration, /session_hash text not null unique/i);
+  assert.match(migration, /enable row level security/i);
+  assert.match(migration, /revoke all on public\.appointment_guest_sessions from public, anon, authenticated, service_role/i);
+  assert.match(migration, /grant execute on function public\.get_appointment_by_guest_session\(text\)\s+to service_role/i);
+  assert.match(migration, /grant execute on function public\.cancel_appointment_by_guest_session\(text\)\s+to service_role/i);
+});
+
+test("booking confirmation issues a high-entropy HttpOnly guest session cookie", () => {
+  const route = read("apps/web/src/app/api/bookings/route.ts");
+  assert.match(route, /randomBytes\(32\)/);
+  assert.match(route, /createHash\("sha256"\)/);
+  assert.match(route, /httpOnly: true/);
+  assert.match(route, /sameSite: "strict"/);
+  assert.match(route, /path: "\/api\/guest-booking"/);
+  assert.match(route, /create_appointment_guest_session/);
+});
+
+test("guest read and cancellation APIs are session-only and protected", () => {
+  const readRoute = read("apps/web/src/app/api/guest-booking/route.ts");
+  const cancelRoute = read("apps/web/src/app/api/guest-booking/cancel/route.ts");
+  assert.match(readRoute, /booking_guest_read/);
+  assert.match(readRoute, /bbm_guest_booking/);
+  assert.match(readRoute, /get_appointment_by_guest_session/);
+  assert.match(cancelRoute, /booking_guest_cancel/);
+  assert.match(cancelRoute, /request\.nextUrl\.origin/);
+  assert.match(cancelRoute, /cancel_appointment_by_guest_session/);
+});

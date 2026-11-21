@@ -389,3 +389,21 @@ select
 Expected: both browser-role booleans are false; both service-role booleans are true. Verify that a service-role request to `consume_api_rate_limit()` increments one IP/scope bucket and returns HTTP-level 429 from the Next.js route when the configured limit is exceeded.
 
 Do not use a production customer's IP or personal data for manual load tests. No migration is applied to the connected Supabase project by the repository change alone.
+
+
+## 14. V2 guest booking management (migration 012)
+
+Apply `supabase/migrations/012_v2_guest_booking_sessions.sql` after migrations 007–011.
+
+When an appointment is confirmed, the V2 server creates a 256-bit random session secret, stores only its SHA-256 digest through a service-role-only RPC, and sets the raw secret in a SameSite=Strict, HttpOnly cookie scoped to `/api/guest-booking`. The cookie is Secure in production and expires after the later of 30 days after issue or 2 days after the appointment end, subject to a 400-day maximum.
+
+Customer endpoints:
+- `GET /api/guest-booking` returns only the appointment associated with the browser's cookie.
+- `POST /api/guest-booking/cancel` checks Origin and the cookie, then cancels only a confirmed appointment.
+- `/booking/manage` displays appointment details and provides the cancellation action.
+
+No endpoint accepts a booking reference as an access credential. The guest session table has RLS enabled and no browser-role privileges; its RPCs are executable only by service_role. Guest read/cancel requests also use the database-backed rate limiter from migration 011.
+
+Test missing/invalid/expired cookies, valid guest reads, cross-origin cancellation rejection, confirmed cancellation, repeated cancellation, terminal-state rejection, and resource reservation release. The session is browser/device-specific; no transferable one-time link or cross-device recovery flow is provided.
+
+No Supabase migration is applied by the repository commit itself.
