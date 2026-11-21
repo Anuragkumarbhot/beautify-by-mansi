@@ -214,16 +214,45 @@ export default function StaffConfigurationPage() {
             </form>
             <div className="config-table-list">
               {services.map((service) => (
-                <div className="config-row" key={value(service, "id")}>
-                  <div><strong>{value(service, "name")}</strong><span>{value(service, "slug")} · {value(service, "duration_minutes")} min · {service.price_amount == null ? "Quote" : "₹" + (Number(service.price_amount) / 100).toFixed(2)}</span></div>
-                  <div className="config-row-actions"><span className={service.is_active ? "config-live" : "config-inactive"}>{service.is_active ? "Active" : "Draft"}</span><button type="button" disabled={saving} onClick={() => void save("services", {
-                    slug: value(service, "slug"), name: value(service, "name"), category: value(service, "category"),
-                    description: value(service, "description"), duration_minutes: Number(service.duration_minutes),
-                    buffer_before_minutes: Number(service.buffer_before_minutes), buffer_after_minutes: Number(service.buffer_after_minutes),
-                    price_amount: service.price_amount == null ? null : Number(service.price_amount),
-                    supports_studio: Boolean(service.supports_studio), supports_home: Boolean(service.supports_home),
-                    is_active: !service.is_active,
-                  }, "update", value(service, "id"))}>{service.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="config-delete" disabled={saving} onClick={() => void remove("services", {}, value(service, "id"))}>Delete</button></div>
+                <div className="config-record" key={value(service, "id")}>
+                  <div className="config-row">
+                    <div><strong>{value(service, "name")}</strong><span>{value(service, "slug")} · {value(service, "duration_minutes")} min · {service.price_amount == null ? "Quote" : "₹" + (Number(service.price_amount) / 100).toFixed(2)}</span></div>
+                    <div className="config-row-actions"><span className={service.is_active ? "config-live" : "config-inactive"}>{service.is_active ? "Active" : "Draft"}</span><button type="button" disabled={saving} onClick={() => void save("services", {
+                      slug: value(service, "slug"), name: value(service, "name"), category: value(service, "category"),
+                      description: value(service, "description"), duration_minutes: Number(service.duration_minutes),
+                      buffer_before_minutes: Number(service.buffer_before_minutes), buffer_after_minutes: Number(service.buffer_after_minutes),
+                      price_amount: service.price_amount == null ? null : Number(service.price_amount),
+                      supports_studio: Boolean(service.supports_studio), supports_home: Boolean(service.supports_home),
+                      is_active: !service.is_active,
+                    }, "update", value(service, "id"))}>{service.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="config-delete" disabled={saving} onClick={() => void remove("services", {}, value(service, "id"))}>Delete</button></div>
+                  </div>
+                  <details className="config-edit">
+                    <summary>Edit service, price and duration</summary>
+                    <form className="config-form config-service-form" onSubmit={(event) => void formSubmit(event, async (form) => save("services", {
+                      slug: String(form.get("slug")).trim().toLowerCase(),
+                      name: String(form.get("name")).trim(),
+                      category: String(form.get("category")).trim(),
+                      description: String(form.get("description") ?? ""),
+                      duration_minutes: Number(form.get("duration")),
+                      buffer_before_minutes: Number(form.get("bufferBefore")),
+                      buffer_after_minutes: Number(form.get("bufferAfter")),
+                      price_amount: moneyFromRupees(String(form.get("price") ?? "")),
+                      supports_studio: form.get("studio") === "on",
+                      supports_home: form.get("home") === "on",
+                      is_active: form.get("active") === "on",
+                    }, "update", value(service, "id")))}>
+                      <label>Service name<input name="name" required maxLength={120} defaultValue={value(service, "name")} /></label>
+                      <label>Slug<input name="slug" required pattern="[a-z0-9-]+" defaultValue={value(service, "slug")} /></label>
+                      <label>Category<input name="category" required maxLength={60} defaultValue={value(service, "category")} /></label>
+                      <label>Duration (minutes)<input name="duration" type="number" min="1" max="1440" defaultValue={value(service, "duration_minutes")} required /></label>
+                      <label>Buffer before (min)<input name="bufferBefore" type="number" min="0" max="1440" defaultValue={value(service, "buffer_before_minutes")} /></label>
+                      <label>Buffer after (min)<input name="bufferAfter" type="number" min="0" max="1440" defaultValue={value(service, "buffer_after_minutes")} /></label>
+                      <label>Price (₹)<input name="price" type="number" min="0" step="0.01" defaultValue={service.price_amount == null ? "" : (Number(service.price_amount) / 100).toFixed(2)} /></label>
+                      <label className="config-full">Short description<textarea name="description" maxLength={1200} rows={2} defaultValue={value(service, "description")} /></label>
+                      <div className="config-checks"><label><input name="studio" type="checkbox" defaultChecked={Boolean(service.supports_studio)} /> Studio</label><label><input name="home" type="checkbox" defaultChecked={Boolean(service.supports_home)} /> Home service</label><label><input name="active" type="checkbox" defaultChecked={Boolean(service.is_active)} /> Active in booking catalogue</label></div>
+                      <button type="submit" disabled={saving}>Save service changes</button>
+                    </form>
+                  </details>
                 </div>
               ))}
               {services.length === 0 ? <p className="config-hint">No services configured yet. Add your first service above.</p> : null}

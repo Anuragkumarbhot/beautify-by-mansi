@@ -99,3 +99,9 @@ undefined
 .config-service-form .config-full,.config-service-form .config-checks{grid-column:1/-1}
 .config-schedule-form{grid-template-columns:repeat(3,minmax(0,1fr))}
 @media(max-width:760px){.config-shell{padding:0 16px 36px}.config-header{height:auto;min-height:66px;align-items:flex-start;padding:16px 0;flex-direction:column}.config-header nav{width:100%;justify-content:space-between}.config-intro{margin:34px auto 20px}.config-grid{grid-template-columns:1fr}.config-span-2{grid-column:auto}.config-card{padding:16px}.config-service-form,.config-schedule-form,.config-form{grid-template-columns:1fr}.config-row{align-items:flex-start;flex-direction:column}.config-row-actions{justify-content:flex-start}.config-form button{width:100%}}
+
+.config-record{border-bottom:1px solid #f0e8e3}
+.config-record .config-row{border-bottom:0}
+.config-edit{padding:0 0 13px}
+.config-edit summary{color:#855f6d;font-size:11px;cursor:pointer;list-style-position:inside}
+.config-edit form{margin:14px 0 0;padding:14px;background:#faf6f3;border:1px solid #eee3dd}
