@@ -13,7 +13,9 @@ const time = z.string().refine((value) => {
   if (parts.length < 2 || parts.length > 3 || parts.some((part) => part.length !== 2 || Number.isNaN(Number(part)))) {
     return false;
   }
-  const [hours, minutes, seconds = "00"] = parts.map(Number);
+  const hours = Number(parts[0]);
+  const minutes = Number(parts[1]);
+  const seconds = parts.length === 3 ? Number(parts[2]) : 0;
   return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59 && seconds >= 0 && seconds <= 59;
 }, "Use a valid 24-hour time.");
 
