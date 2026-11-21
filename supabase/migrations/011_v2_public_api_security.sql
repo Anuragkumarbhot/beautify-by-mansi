@@ -61,6 +61,7 @@ declare
   v_retry_after integer;
 begin
   if p_client_ip is null
+    or p_scope is null
     or p_scope not in ('booking_availability', 'booking_create')
     or p_limit is null or p_limit < 1 or p_limit > 120
     or p_window_seconds is null or p_window_seconds < 1 or p_window_seconds > 3600 then
@@ -86,8 +87,8 @@ begin
       then 1
       else current_bucket.request_count + 1
     end
-  returning api_rate_limit_buckets.window_started_at,
-            api_rate_limit_buckets.request_count
+  returning current_bucket.window_started_at,
+            current_bucket.request_count
   into v_window_started_at, v_request_count;
 
   -- Bounded retention for abandoned IP buckets.

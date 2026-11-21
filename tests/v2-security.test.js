@@ -64,3 +64,11 @@ test("Next.js emits baseline security headers", () => {
     assert.ok(config.includes(header), "Missing header: " + header);
   }
 });
+
+test("patched dependency baselines stay above the current audited fixes", () => {
+  const pkg = JSON.parse(read("apps/web/package.json"));
+  assert.equal(pkg.dependencies.next, "15.5.29");
+  assert.equal(pkg.devDependencies["eslint-config-next"], "15.5.29");
+  assert.equal(pkg.dependencies.zod, "4.6.7");
+  assert.equal(pkg.devDependencies.postcss, "8.5.23");
+});

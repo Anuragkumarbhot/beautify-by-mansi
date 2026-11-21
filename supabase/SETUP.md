@@ -332,3 +332,60 @@ order by p.proname;
 ```
 
 Expected: both functions appear, both are security-definer functions, and anonymous execution is granted so the public API can call them. The functions validate requests and do not expose staff identities or customer records. Keep the booking switch disabled until the application and operational checks are complete.
+
+## 12. V2 launch-readiness security controls (migration 011)
+
+Apply `supabase/migrations/011_v2_public_api_security.sql` only after migrations 007–010.
+
+This migration:
+- Revokes direct `anon` and `authenticated` execution of `get_appointment_availability` and `create_appointment_booking`.
+- Grants those RPCs to `service_role` only. The Next.js API routes call them server-side.
+- Adds a private fixed-window rate-limit table and `consume_api_rate_limit()` RPC, callable only by the service role.
+- Keeps the public booking switch unchanged; it is still false by default.
+
+### Required V2 server environment
+
+Configure these values in the V2 hosting project:
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `SUPABASE_SERVICE_ROLE_KEY` — server-only secret; never prefix with `NEXT_PUBLIC_`, never place it in client code, and never commit its value.
+
+The V2 booking and rate-limit routes fail closed when the server-role key or rate-limit service is unavailable. Do not reuse the service-role key in browser code.
+
+### Rate policies
+
+- Availability: 45 requests per client IP per 60-second fixed window.
+- Booking creation: 5 requests per client IP per 600-second fixed window.
+- Oversized booking JSON bodies are rejected above 16 KiB.
+- Rate-limit storage is private and retains expired IP buckets for at most approximately two days through opportunistic cleanup.
+
+The limiter currently keys off the first valid `X-Forwarded-For` address, falling back to `X-Real-IP`, then a shared fallback bucket. Before launch, verify the hosting proxy overwrites untrusted inbound forwarding headers. If the proxy does not sanitize those headers, configure a trusted proxy/IP header or place a trusted edge rate limiter in front of the app. This database limiter is basic abuse mitigation, not a substitute for bot protection, WAF/DDoS controls, monitoring or CAPTCHA.
+
+### Security verification after applying migration 011
+
+Run these checks using Supabase SQL Editor or authenticated/anonymous REST tests:
+
+```sql
+select
+  has_function_privilege('anon',
+    'public.create_appointment_booking(uuid,uuid[],timestamp with time zone,text,text,text,text,text,text,text,text,text,text)',
+    'EXECUTE') as anon_can_create_booking,
+  has_function_privilege('authenticated',
+    'public.create_appointment_booking(uuid,uuid[],timestamp with time zone,text,text,text,text,text,text,text,text,text,text)',
+    'EXECUTE') as authenticated_can_create_booking,
+  has_function_privilege('service_role',
+    'public.create_appointment_booking(uuid,uuid[],timestamp with time zone,text,text,text,text,text,text,text,text,text,text)',
+    'EXECUTE') as service_role_can_create_booking;
+
+select
+  has_function_privilege('anon',
+    'public.get_appointment_availability(date,text,uuid[],text)',
+    'EXECUTE') as anon_can_query_availability,
+  has_function_privilege('service_role',
+    'public.get_appointment_availability(date,text,uuid[],text)',
+    'EXECUTE') as service_role_can_query_availability;
+```
+
+Expected: both browser-role booleans are false; both service-role booleans are true. Verify that a service-role request to `consume_api_rate_limit()` increments one IP/scope bucket and returns HTTP-level 429 from the Next.js route when the configured limit is exceeded.
+
+Do not use a production customer's IP or personal data for manual load tests. No migration is applied to the connected Supabase project by the repository change alone.
