@@ -19,8 +19,9 @@ grant execute on function public.create_appointment_booking(
   uuid, uuid[], timestamptz, text, text, text, text, text, text, text, text, text, text
 ) to service_role;
 
--- Fixed-window request counters. Raw client IP is retained only for the active
--- two-day window; the table is never directly readable/writable by browser roles.
+-- Fixed-window request counters. Expired buckets are pruned opportunistically
+-- by subsequent limiter invocations; no scheduled cleanup job is installed here.
+-- The table is never directly readable/writable by browser roles.
 create table if not exists public.api_rate_limit_buckets (
   client_ip inet not null,
   scope text not null check (scope in (

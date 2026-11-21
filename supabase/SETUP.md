@@ -357,7 +357,7 @@ The V2 booking and rate-limit routes fail closed when the server-role key or rat
 - Availability: 45 requests per client IP per 60-second fixed window.
 - Booking creation: 5 requests per client IP per 600-second fixed window.
 - Oversized booking JSON bodies are rejected above 16 KiB.
-- Rate-limit storage is private and retains expired IP buckets for at most approximately two days through opportunistic cleanup.
+- Rate-limit storage is private. Expired IP buckets are pruned opportunistically when later requests invoke the limiter; there is no scheduled cleanup job in this migration.
 
 The limiter currently keys off the first valid `X-Forwarded-For` address, falling back to `X-Real-IP`, then a shared fallback bucket. Before launch, verify the hosting proxy overwrites untrusted inbound forwarding headers. If the proxy does not sanitize those headers, configure a trusted proxy/IP header or place a trusted edge rate limiter in front of the app. This database limiter is basic abuse mitigation, not a substitute for bot protection, WAF/DDoS controls, monitoring or CAPTCHA.
 
