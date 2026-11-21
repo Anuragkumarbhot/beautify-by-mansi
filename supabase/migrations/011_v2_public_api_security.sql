@@ -25,7 +25,9 @@ create table if not exists public.api_rate_limit_buckets (
   client_ip inet not null,
   scope text not null check (scope in (
     'booking_availability',
-    'booking_create'
+    'booking_create',
+    'booking_guest_read',
+    'booking_guest_cancel'
   )),
   window_started_at timestamptz not null,
   request_count integer not null check (request_count > 0),
@@ -62,7 +64,12 @@ declare
 begin
   if p_client_ip is null
     or p_scope is null
-    or p_scope not in ('booking_availability', 'booking_create')
+    or p_scope not in (
+      'booking_availability',
+      'booking_create',
+      'booking_guest_read',
+      'booking_guest_cancel'
+    )
     or p_limit is null or p_limit < 1 or p_limit > 120
     or p_window_seconds is null or p_window_seconds < 1 or p_window_seconds > 3600 then
     raise exception using errcode = '22023', message = 'INVALID_RATE_LIMIT_REQUEST';

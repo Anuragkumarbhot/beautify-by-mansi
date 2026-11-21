@@ -8,7 +8,11 @@ type RateLimitRow = {
   remaining: number;
 };
 
-export type PublicRateLimitScope = "booking_availability" | "booking_create";
+export type PublicRateLimitScope =
+  | "booking_availability"
+  | "booking_create"
+  | "booking_guest_read"
+  | "booking_guest_cancel";
 
 /**
  * Uses the first forwarded client address. Before production, verify the hosting
