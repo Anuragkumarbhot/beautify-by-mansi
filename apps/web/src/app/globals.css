@@ -105,3 +105,9 @@ undefined
 .config-edit{padding:0 0 13px}
 .config-edit summary{color:#855f6d;font-size:11px;cursor:pointer;list-style-position:inside}
 .config-edit form{margin:14px 0 0;padding:14px;background:#faf6f3;border:1px solid #eee3dd}
+
+.booking-notice{margin:14px 0;padding:12px 14px;border-left:3px solid #6d8c69;background:#edf4ed;color:#486d4c;font-size:13px;line-height:1.5}
+.booking-management-services{margin:22px 0;text-align:left;border-top:1px solid #eaded7;padding-top:18px}
+.booking-management-services h2{font-family:Georgia,serif;font-weight:400;color:#553642;font-size:20px}
+.booking-management-services p{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f0e8e3;color:#735c58;font-size:12px}
+.booking-home-link{display:block;margin-top:14px;color:#765665;font-size:12px;text-decoration:underline}

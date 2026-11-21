@@ -271,8 +271,9 @@ export default function BookPage() {
               <p><strong>Location</strong><span>{confirmation.locationType === "studio" ? "Studio appointment" : "Home service"}</span></p>
               <p><strong>Status</strong><span>{confirmation.status}</span></p>
             </div>
-            <p className="booking-disclaimer">Payment is not collected through this booking flow. Keep your reference for any appointment enquiry. This confirmation is displayed from the booking API response.</p>
-            <Link className="button button-primary" href="/">Return to home</Link>
+            <p className="booking-disclaimer">Payment is not collected through this booking flow. A secure management session has been saved in this browser.</p>
+            <Link className="button button-primary" href="/booking/manage">View or cancel this appointment</Link>
+            <Link className="booking-home-link" href="/">Return to home</Link>
           </section>
         </main>
       </>
