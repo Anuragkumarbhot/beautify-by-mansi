@@ -10,10 +10,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "next": "15.5.6",
+    "next": "15.5.29",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "zod": "4.1.12"
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@types/node": "22.15.30",
@@ -21,8 +21,8 @@
     "@types/react-dom": "19.1.7",
     "autoprefixer": "10.4.21",
     "eslint": "8.57.1",
-    "eslint-config-next": "15.5.6",
-    "postcss": "8.5.6",
+    "eslint-config-next": "15.5.29",
+    "postcss": "8.5.23",
     "tailwindcss": "3.4.17",
     "typescript": "5.8.3"
   }
