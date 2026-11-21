@@ -239,10 +239,6 @@ export async function POST(request: NextRequest) {
     method = "PATCH";
     path += collection === "settings" ? "?id=eq.1" : "?id=eq." + encodeURIComponent(id!);
   }
-  if (collection === "settings") {
-    path += (path.includes("?") ? "&" : "?") + "id=eq.1";
-  }
-
   try {
     const rows = await supabaseRestAsUser<unknown[]>(
       path + (method === "PATCH" ? "&select=" + configSelects[collection] : "?select=" + configSelects[collection]),

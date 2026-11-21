@@ -151,10 +151,11 @@ export default function StaffConfigurationPage() {
 
   async function formSubmit(event: FormEvent<HTMLFormElement>, build: (form: FormData) => Promise<void>) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    const formElement = event.currentTarget;
+    const form = new FormData(formElement);
     try {
       await build(form);
-      event.currentTarget.reset();
+      formElement.reset();
     } catch (formError) {
       setError(formError instanceof Error ? formError.message : "Invalid form details.");
     }
@@ -215,7 +216,14 @@ export default function StaffConfigurationPage() {
               {services.map((service) => (
                 <div className="config-row" key={value(service, "id")}>
                   <div><strong>{value(service, "name")}</strong><span>{value(service, "slug")} · {value(service, "duration_minutes")} min · {service.price_amount == null ? "Quote" : "₹" + (Number(service.price_amount) / 100).toFixed(2)}</span></div>
-                  <div className="config-row-actions"><span className={service.is_active ? "config-live" : "config-inactive"}>{service.is_active ? "Active" : "Draft"}</span><button type="button" disabled={saving} onClick={() => void save("services", { is_active: !service.is_active }, "update", value(service, "id"))}>{service.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="config-delete" disabled={saving} onClick={() => void remove("services", {}, value(service, "id"))}>Delete</button></div>
+                  <div className="config-row-actions"><span className={service.is_active ? "config-live" : "config-inactive"}>{service.is_active ? "Active" : "Draft"}</span><button type="button" disabled={saving} onClick={() => void save("services", {
+                    slug: value(service, "slug"), name: value(service, "name"), category: value(service, "category"),
+                    description: value(service, "description"), duration_minutes: Number(service.duration_minutes),
+                    buffer_before_minutes: Number(service.buffer_before_minutes), buffer_after_minutes: Number(service.buffer_after_minutes),
+                    price_amount: service.price_amount == null ? null : Number(service.price_amount),
+                    supports_studio: Boolean(service.supports_studio), supports_home: Boolean(service.supports_home),
+                    is_active: !service.is_active,
+                  }, "update", value(service, "id"))}>{service.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="config-delete" disabled={saving} onClick={() => void remove("services", {}, value(service, "id"))}>Delete</button></div>
                 </div>
               ))}
               {services.length === 0 ? <p className="config-hint">No services configured yet. Add your first service above.</p> : null}
@@ -238,7 +246,10 @@ export default function StaffConfigurationPage() {
               {config.resources.map((resource) => (
                 <div className="config-row" key={value(resource, "id")}>
                   <div><strong>{value(resource, "display_name")}</strong><span>{value(resource, "resource_type")}</span></div>
-                  <div className="config-row-actions"><span className={resource.is_active ? "config-live" : "config-inactive"}>{resource.is_active ? "Active" : "Inactive"}</span><button type="button" disabled={saving} onClick={() => void save("resources", { is_active: !resource.is_active }, "update", value(resource, "id"))}>{resource.is_active ? "Deactivate" : "Activate"}</button></div>
+                  <div className="config-row-actions"><span className={resource.is_active ? "config-live" : "config-inactive"}>{resource.is_active ? "Active" : "Inactive"}</span><button type="button" disabled={saving} onClick={() => void save("resources", {
+                    resource_type: String(resource.resource_type), display_name: value(resource, "display_name"),
+                    is_active: !resource.is_active,
+                  }, "update", value(resource, "id"))}>{resource.is_active ? "Deactivate" : "Activate"}</button></div>
                 </div>
               ))}
             </div>
@@ -299,7 +310,14 @@ export default function StaffConfigurationPage() {
                 const resource = config.resources.find((r) => value(r, "id") === value(rule, "resource_id"));
                 return <div className="config-row" key={value(rule, "id")}>
                   <div><strong>{value(resource ?? {}, "display_name")} · {weekdays[Number(rule.weekday)]}</strong><span>{value(rule, "location_type")} · {value(rule, "opens_at").slice(0,5)}–{value(rule, "closes_at").slice(0,5)} · every {value(rule, "slot_interval_minutes")} min</span></div>
-                  <div className="config-row-actions"><span className={rule.is_active ? "config-live" : "config-inactive"}>{rule.is_active ? "Active" : "Inactive"}</span><button type="button" disabled={saving} onClick={() => void save("availability", { is_active: !rule.is_active }, "update", value(rule, "id"))}>{rule.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="config-delete" disabled={saving} onClick={() => void remove("availability", {}, value(rule, "id"))}>Delete</button></div>
+                  <div className="config-row-actions"><span className={rule.is_active ? "config-live" : "config-inactive"}>{rule.is_active ? "Active" : "Inactive"}</span><button type="button" disabled={saving} onClick={() => void save("availability", {
+                    resource_id: value(rule, "resource_id"), location_type: value(rule, "location_type"),
+                    weekday: Number(rule.weekday), opens_at: value(rule, "opens_at"), closes_at: value(rule, "closes_at"),
+                    slot_interval_minutes: Number(rule.slot_interval_minutes), timezone_name: "Asia/Kolkata",
+                    effective_from: rule.effective_from == null ? null : value(rule, "effective_from"),
+                    effective_until: rule.effective_until == null ? null : value(rule, "effective_until"),
+                    is_active: !rule.is_active,
+                  }, "update", value(rule, "id"))}>{rule.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="config-delete" disabled={saving} onClick={() => void remove("availability", {}, value(rule, "id"))}>Delete</button></div>
                 </div>;
               })}
             </div>
@@ -326,7 +344,11 @@ export default function StaffConfigurationPage() {
             <div className="config-table-list">
               {config.areas.map((area) => <div className="config-row" key={value(area, "id")}>
                 <div><strong>{value(area, "name")} · {value(area, "pincode")}</strong><span>{value(area, "city")}, {value(area, "state")} · {value(area, "travel_buffer_minutes")} min travel buffer</span></div>
-                <div className="config-row-actions"><span className={area.is_active ? "config-live" : "config-inactive"}>{area.is_active ? "Active" : "Inactive"}</span><button type="button" disabled={saving} onClick={() => void save("areas", { is_active: !area.is_active }, "update", value(area, "id"))}>{area.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="config-delete" disabled={saving} onClick={() => void remove("areas", {}, value(area, "id"))}>Delete</button></div>
+                <div className="config-row-actions"><span className={area.is_active ? "config-live" : "config-inactive"}>{area.is_active ? "Active" : "Inactive"}</span><button type="button" disabled={saving} onClick={() => void save("areas", {
+                    name: value(area, "name"), pincode: value(area, "pincode"), city: value(area, "city"),
+                    state: value(area, "state"), travel_buffer_minutes: Number(area.travel_buffer_minutes),
+                    is_active: !area.is_active,
+                  }, "update", value(area, "id"))}>{area.is_active ? "Deactivate" : "Activate"}</button><button type="button" className="config-delete" disabled={saving} onClick={() => void remove("areas", {}, value(area, "id"))}>Delete</button></div>
               </div>)}
             </div>
           </section>
