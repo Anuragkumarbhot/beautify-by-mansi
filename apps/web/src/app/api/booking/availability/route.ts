@@ -4,7 +4,7 @@ import { enforcePublicRateLimit } from "@/lib/public-api-security";
 import { isSupabaseNotConfigured, supabaseRestAsServiceRole } from "@/lib/supabase-rest";
 
 const uuidSchema = z.string().uuid();
-const dateSchema = z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).refine((value) => {
+const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
   const date = new Date(value + "T00:00:00.000Z");
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 });
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (locationType === "home" && !/^\\d{6}$/.test(postalCode)) {
+  if (locationType === "home" && !/^\d{6}$/.test(postalCode)) {
     return NextResponse.json(
       { error: "VALID_PINCODE_REQUIRED" },
       { status: 400, headers: { "Cache-Control": "no-store" } }

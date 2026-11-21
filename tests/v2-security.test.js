@@ -27,7 +27,7 @@ test("rate-limit storage is RLS protected and has no browser table grants", () =
 test("public availability endpoint rate-limits before querying Supabase", () => {
   const route = read("apps/web/src/app/api/booking/availability/route.ts");
   assert.match(route, /enforcePublicRateLimit\(request, "booking_availability", 45, 60\)/);
-  assert.ok(route.indexOf("enforcePublicRateLimit") < route.indexOf("supabaseRestAsServiceRole"));
+  assert.ok(route.indexOf('const rateLimit = await enforcePublicRateLimit') < route.indexOf('const slots = await supabaseRestAsServiceRole'));
 });
 
 test("public booking endpoint rate-limits and bounds its request body", () => {
@@ -73,4 +73,12 @@ test("patched dependency baselines stay above the current audited fixes", () => 
   assert.equal(pkg.devDependencies["eslint-config-next"], "15.5.29");
   assert.equal(pkg.dependencies.zod, "4.6.7");
   assert.equal(pkg.devDependencies.postcss, "8.5.23");
+});
+
+test("booking input regexes validate digits rather than literal backslashes", () => {
+  const availability = read("apps/web/src/app/api/booking/availability/route.ts");
+  const booking = read("apps/web/src/app/api/bookings/route.ts");
+  assert.match(availability, /regex\\(\\/\\^\\\\d\\{4\\}/);
+  assert.match(booking, /replace\\(\\/\\\\D\\/g/);
+  assert.match(booking, /postalCode: z\\.string\\(\\)\\.regex\\(\\/\\^\\\\d\\{6\\}/);
 });

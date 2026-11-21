@@ -12,7 +12,7 @@ const bookingSchema = z.object({
   locationType: z.enum(["studio", "home"]),
   customerName: z.string().trim().min(1).max(80),
   customerPhone: z.string().trim().min(10).max(20).refine((value) => {
-    const digits = value.replace(/\\D/g, "").length;
+    const digits = value.replace(/\D/g, "").length;
     return digits >= 10 && digits <= 15;
   }),
   customerEmail: z.union([z.string().trim().email().max(254), z.literal("")]).optional(),
@@ -21,7 +21,7 @@ const bookingSchema = z.object({
   addressLine1: z.string().trim().min(1).max(200).optional(),
   addressLine2: z.string().trim().max(200).optional(),
   locality: z.string().trim().max(120).optional(),
-  postalCode: z.string().regex(/^\\d{6}$/).optional(),
+  postalCode: z.string().regex(/^\d{6}$/).optional(),
 }).strict().superRefine((value, context) => {
   if (new Set(value.serviceIds).size !== value.serviceIds.length) {
     context.addIssue({
