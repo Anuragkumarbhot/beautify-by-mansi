@@ -119,3 +119,32 @@ test("guest read and cancellation APIs are session-only and protected", () => {
   assert.match(cancelRoute, /request\.nextUrl\.origin/);
   assert.match(cancelRoute, /cancel_appointment_by_guest_session/);
 });
+
+test("guest booking sessions are private and created/read/cancelled through service-role RPCs", () => {
+  const migration = read("supabase/migrations/012_v2_guest_booking_sessions.sql");
+  assert.match(migration, /alter table public\.appointment_guest_sessions enable row level security/i);
+  assert.match(migration, /revoke all on public\.appointment_guest_sessions from public, anon, authenticated, service_role/i);
+  assert.match(migration, /grant execute on function public\.create_appointment_guest_session[\s\S]*?to service_role/i);
+  assert.match(migration, /grant execute on function public\.get_appointment_by_guest_session[\s\S]*?to service_role/i);
+  assert.match(migration, /grant execute on function public\.cancel_appointment_by_guest_session[\s\S]*?to service_role/i);
+});
+
+test("guest management cookie is high entropy, HttpOnly and same-site", () => {
+  const route = read("apps/web/src/app/api/bookings/route.ts");
+  assert.match(route, /randomBytes\(32\)/);
+  assert.match(route, /createHash\("sha256"\)/);
+  assert.match(route, /httpOnly: true/);
+  assert.match(route, /sameSite: "strict"/);
+  assert.match(route, /path: "\/api\/guest-booking"/);
+});
+
+test("guest read and cancel routes require the private cookie and apply rate/Origin checks", () => {
+  const readRoute = read("apps/web/src/app/api/guest-booking/route.ts");
+  const cancelRoute = read("apps/web/src/app/api/guest-booking/cancel/route.ts");
+  assert.match(readRoute, /booking_guest_read/);
+  assert.match(readRoute, /bbm_guest_booking/);
+  assert.match(readRoute, /get_appointment_by_guest_session/);
+  assert.match(cancelRoute, /booking_guest_cancel/);
+  assert.match(cancelRoute, /request\.nextUrl\.origin/);
+  assert.match(cancelRoute, /cancel_appointment_by_guest_session/);
+});
