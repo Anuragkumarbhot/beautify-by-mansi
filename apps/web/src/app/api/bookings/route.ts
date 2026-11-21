@@ -1,3 +1,4 @@
+import { createHash, randomBytes } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 import { enforcePublicRateLimit, readLimitedJsonBody } from "@/lib/public-api-security";
@@ -171,7 +172,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    return NextResponse.json(
+    const sessionSecret = randomBytes(32).toString("base64url");
+    const sessionHash = createHash("sha256").update(sessionSecret).digest("hex");
+    const bookingEndsAt = new Date(created.ends_at).getTime();
+    const sessionExpiry = new Date(Math.max(
+      Date.now() + 30 * 24 * 60 * 60 * 1000,
+      bookingEndsAt + 2 * 24 * 60 * 60 * 1000
+    )).toISOString();
+
+    const sessionCreated = await supabaseRestAsServiceRole<boolean>(
+      "/rest/v1/rpc/create_appointment_guest_session",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          p_booking_id: created.booking_id,
+          p_session_hash: sessionHash,
+          p_expires_at: sessionExpiry,
+        }),
+      }
+    );
+
+    if (sessionCreated !== true) {
+      throw new Error("GUEST_SESSION_CREATION_FAILED");
+    }
+
+    const response = NextResponse.json(
       {
         booking: {
           reference: created.reference,
@@ -182,12 +207,25 @@ export async function POST(request: NextRequest) {
         },
         repeatedRequest: created.was_existing_request,
         paymentStatus: "not_required",
+        guestManagementAvailable: true,
       },
       {
         status: created.was_existing_request ? 200 : 201,
         headers: { "Cache-Control": "no-store" },
       }
     );
+
+    response.cookies.set({
+      name: "bbm_guest_booking",
+      value: sessionSecret,
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "strict",
+      path: "/api/guest-booking",
+      maxAge: Math.max(60, Math.floor((Date.parse(sessionExpiry) - Date.now()) / 1000)),
+    });
+
+    return response;
   } catch (error) {
     const mapped = mapBookingError(error);
     const configured = !isSupabaseNotConfigured(error);
