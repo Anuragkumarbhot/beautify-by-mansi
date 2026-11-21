@@ -34,7 +34,12 @@ test("public booking endpoint rate-limits and bounds its request body", () => {
   const route = read("apps/web/src/app/api/bookings/route.ts");
   assert.match(route, /enforcePublicRateLimit\(request, "booking_create", 5, 600\)/);
   assert.match(route, /MAX_BOOKING_BODY_BYTES = 16 \* 1024/);
+  assert.match(route, /readLimitedJsonBody\(request, MAX_BOOKING_BODY_BYTES\)/);
   assert.match(route, /supabaseRestAsServiceRole/);
+  const security = read("apps/web/src/lib/public-api-security.ts");
+  assert.match(security, /request\.body\?\.getReader\(\)/);
+  assert.match(security, /totalBytes > maxBytes/);
+  assert.match(security, /reader\.cancel\(\)/);
 });
 
 test("service-role Supabase access is marked server-only and never uses a public key name", () => {

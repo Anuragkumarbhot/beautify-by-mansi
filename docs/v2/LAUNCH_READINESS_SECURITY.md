@@ -8,7 +8,7 @@ Status: code and CI controls committed to `v2.0.0-foundation`. This is not a pro
 - Next.js server routes use `SUPABASE_SERVICE_ROLE_KEY` only through a `server-only` module. The secret is not returned to client code.
 - Availability requests are rate-limited to 45 requests per IP per 60-second fixed window.
 - Booking creation is rate-limited to 5 requests per IP per 10-minute fixed window.
-- Booking JSON bodies above 16 KiB and non-JSON content types are rejected.
+- Booking JSON bodies are streamed and cancelled above 16 KiB, including requests without a declared `Content-Length`; non-JSON content types are rejected.
 - The rate-limit table has RLS enabled and no browser-role table grants. Its RPC is service-role-only.
 - Baseline HTTP response headers are configured in Next.js: HSTS, frame denial, MIME sniffing protection, referrer policy, and a restricted permissions policy.
 - CI runs `npm audit --audit-level=high` before tests, type-check, lint and build.

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { enforcePublicRateLimit } from "@/lib/public-api-security";
+import { enforcePublicRateLimit, readLimitedJsonBody } from "@/lib/public-api-security";
 import { isSupabaseNotConfigured, supabaseRestAsServiceRole } from "@/lib/supabase-rest";
 
 const MAX_BOOKING_BODY_BYTES = 16 * 1024;
@@ -117,24 +117,17 @@ export async function POST(request: NextRequest) {
   const rateLimit = await enforcePublicRateLimit(request, "booking_create", 5, 600);
   if (rateLimit) return rateLimit;
 
-  const contentLength = Number(request.headers.get("content-length") ?? "0");
-  if (Number.isFinite(contentLength) && contentLength > MAX_BOOKING_BODY_BYTES) {
-    return NextResponse.json({ error: "REQUEST_BODY_TOO_LARGE" }, { status: 413 });
-  }
-
   const contentType = request.headers.get("content-type") ?? "";
   if (!contentType.toLowerCase().startsWith("application/json")) {
     return NextResponse.json({ error: "JSON_CONTENT_TYPE_REQUIRED" }, { status: 415 });
   }
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "INVALID_JSON" }, { status: 400 });
+  const limitedBody = await readLimitedJsonBody(request, MAX_BOOKING_BODY_BYTES);
+  if (!limitedBody.ok) {
+    return NextResponse.json({ error: limitedBody.error }, { status: limitedBody.status });
   }
 
-  const parsed = bookingSchema.safeParse(body);
+  const parsed = bookingSchema.safeParse(limitedBody.value);
   if (!parsed.success) {
     return NextResponse.json(
       {
