@@ -381,7 +381,7 @@ export default function StaffConfigurationPage() {
               timezone_name: "Asia/Kolkata",
               minimum_notice_minutes: Number(form.get("notice")),
               booking_horizon_days: Number(form.get("horizon")),
-            }, "update")}>
+            }, "update"))}>
               <label>Minimum notice (minutes)<input name="notice" type="number" min="0" max="525600" defaultValue={value(currentSettings, "minimum_notice_minutes") || "1440"} required /></label>
               <label>Booking horizon (days)<input name="horizon" type="number" min="1" max="365" defaultValue={value(currentSettings, "booking_horizon_days") || "60"} required /></label>
               <button type="submit" disabled={saving || !config.settings.length}>Save booking limits</button>

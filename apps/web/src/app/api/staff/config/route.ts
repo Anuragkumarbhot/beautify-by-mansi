@@ -8,7 +8,14 @@ import { supabaseRestAsUser } from "@/lib/supabase-rest";
 
 const uuid = z.string().uuid();
 const slug = z.string().regex(/^[a-z0-9](?:[a-z0-9-]{0,58}[a-z0-9])?$/);
-const time = z.string().regex(/^(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d)?$/);
+const time = z.string().refine((value) => {
+  const parts = value.split(":");
+  if (parts.length < 2 || parts.length > 3 || parts.some((part) => part.length !== 2 || Number.isNaN(Number(part)))) {
+    return false;
+  }
+  const [hours, minutes, seconds = "00"] = parts.map(Number);
+  return hours >= 0 && hours <= 23 && minutes >= 0 && minutes <= 59 && seconds >= 0 && seconds <= 59;
+}, "Use a valid 24-hour time.");
 
 const serviceSchema = z.object({
   slug,
@@ -34,7 +41,7 @@ const resourceSchema = z.object({
 
 const areaSchema = z.object({
   name: z.string().trim().min(1).max(120),
-  pincode: z.string().regex(/^\\d{6}$/),
+  pincode: z.string().length(6).refine((value) => !value.split("").some((digit) => digit < "0" || digit > "9"), "Enter a six-digit pincode."),
   city: z.string().trim().min(1).max(100),
   state: z.string().trim().min(1).max(100),
   travel_buffer_minutes: z.number().int().min(0).max(1440),

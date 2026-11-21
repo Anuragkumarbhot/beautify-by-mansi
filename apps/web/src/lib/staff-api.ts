@@ -20,12 +20,12 @@ export async function requireAppointmentStaff(
   request: NextRequest
 ): Promise<AppointmentStaffContext | NextResponse> {
   const authorization = request.headers.get("authorization") ?? "";
-  const match = /^Bearer\\s+([A-Za-z0-9._~-]+)$/.exec(authorization);
-  if (!match) {
+  const separator = authorization.indexOf(" ");
+  const scheme = separator > 0 ? authorization.slice(0, separator).toLowerCase() : "";
+  const accessToken = separator > 0 ? authorization.slice(separator + 1).trim() : "";
+  if (scheme !== "bearer" || !accessToken || accessToken.includes(" ")) {
     return NextResponse.json({ error: "AUTH_REQUIRED" }, { status: 401 });
   }
-
-  const accessToken = match[1];
   try {
     const user = await supabaseAuthUser(accessToken);
     const rows = await supabaseRestAsUser<StaffMembership[]>(
