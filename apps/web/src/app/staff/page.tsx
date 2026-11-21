@@ -221,7 +221,7 @@ export default function StaffAppointmentsPage() {
         <Link className="staff-wordmark" href="/">BEAUTIFY <span>BY MANSI</span></Link>
         <div className="staff-header-right">
           <span>STUDIO OPERATIONS</span>
-          {accessToken ? <button type="button" className="staff-text-button" onClick={handleSignOut}>Sign out</button> : null}
+          {accessToken ? <><Link className="staff-text-button" href="/staff/config">Configuration</Link><button type="button" className="staff-text-button" onClick={handleSignOut}>Sign out</button></> : null}
         </div>
       </header>
 

@@ -12,6 +12,10 @@ export type AppointmentStaffContext = {
   role: StaffMembership["role"];
 };
 
+export type AppointmentManagerContext = AppointmentStaffContext & {
+  role: "owner" | "manager";
+};
+
 export async function requireAppointmentStaff(
   request: NextRequest
 ): Promise<AppointmentStaffContext | NextResponse> {
@@ -39,8 +43,25 @@ export async function requireAppointmentStaff(
   }
 }
 
+export async function requireAppointmentManager(
+  request: NextRequest
+): Promise<AppointmentManagerContext | NextResponse> {
+  const staff = await requireAppointmentStaff(request);
+  if (isStaffResponse(staff)) return staff;
+  if (staff.role !== "owner" && staff.role !== "manager") {
+    return NextResponse.json({ error: "MANAGER_ACCESS_REQUIRED" }, { status: 403 });
+  }
+  return { ...staff, role: staff.role };
+}
+
 export function isStaffResponse(
   value: AppointmentStaffContext | NextResponse
+): value is NextResponse {
+  return value instanceof NextResponse;
+}
+
+export function isManagerResponse(
+  value: AppointmentManagerContext | NextResponse
 ): value is NextResponse {
   return value instanceof NextResponse;
 }
