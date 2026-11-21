@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { isSupabaseNotConfigured, supabaseRest } from "@/lib/supabase-rest";
+import { enforcePublicRateLimit } from "@/lib/public-api-security";
+import { isSupabaseNotConfigured, supabaseRestAsServiceRole } from "@/lib/supabase-rest";
+
+const MAX_BOOKING_BODY_BYTES = 16 * 1024;
 
 const bookingSchema = z.object({
   idempotencyKey: z.string().uuid(),
@@ -9,7 +12,7 @@ const bookingSchema = z.object({
   locationType: z.enum(["studio", "home"]),
   customerName: z.string().trim().min(1).max(80),
   customerPhone: z.string().trim().min(10).max(20).refine((value) => {
-    const digits = value.replace(/\D/g, "").length;
+    const digits = value.replace(/\\D/g, "").length;
     return digits >= 10 && digits <= 15;
   }),
   customerEmail: z.union([z.string().trim().email().max(254), z.literal("")]).optional(),
@@ -18,7 +21,7 @@ const bookingSchema = z.object({
   addressLine1: z.string().trim().min(1).max(200).optional(),
   addressLine2: z.string().trim().max(200).optional(),
   locality: z.string().trim().max(120).optional(),
-  postalCode: z.string().regex(/^\d{6}$/).optional(),
+  postalCode: z.string().regex(/^\\d{6}$/).optional(),
 }).strict().superRefine((value, context) => {
   if (new Set(value.serviceIds).size !== value.serviceIds.length) {
     context.addIssue({
@@ -83,7 +86,8 @@ function mapBookingError(error: unknown) {
     message.includes("BOOKING_DISABLED") ||
     message.includes("BOOKING_SETTINGS_INCOMPLETE") ||
     message.includes("BOOKING_TIMEZONE_NOT_CONFIGURED") ||
-    message.includes("SUPABASE_NOT_CONFIGURED")
+    message.includes("SUPABASE_NOT_CONFIGURED") ||
+    message.includes("SUPABASE_SERVICE_ROLE_KEY_NOT_CONFIGURED")
   ) {
     return {
       status: 503,
@@ -110,8 +114,20 @@ function mapBookingError(error: unknown) {
 }
 
 export async function POST(request: NextRequest) {
-  let body: unknown;
+  const rateLimit = await enforcePublicRateLimit(request, "booking_create", 5, 600);
+  if (rateLimit) return rateLimit;
 
+  const contentLength = Number(request.headers.get("content-length") ?? "0");
+  if (Number.isFinite(contentLength) && contentLength > MAX_BOOKING_BODY_BYTES) {
+    return NextResponse.json({ error: "REQUEST_BODY_TOO_LARGE" }, { status: 413 });
+  }
+
+  const contentType = request.headers.get("content-type") ?? "";
+  if (!contentType.toLowerCase().startsWith("application/json")) {
+    return NextResponse.json({ error: "JSON_CONTENT_TYPE_REQUIRED" }, { status: 415 });
+  }
+
+  let body: unknown;
   try {
     body = await request.json();
   } catch {
@@ -132,7 +148,7 @@ export async function POST(request: NextRequest) {
   const booking = parsed.data;
 
   try {
-    const rows = await supabaseRest<CreatedBooking[]>(
+    const rows = await supabaseRestAsServiceRole<CreatedBooking[]>(
       "/rest/v1/rpc/create_appointment_booking",
       {
         method: "POST",

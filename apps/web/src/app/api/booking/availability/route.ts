@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { isSupabaseNotConfigured, supabaseRest } from "@/lib/supabase-rest";
+import { enforcePublicRateLimit } from "@/lib/public-api-security";
+import { isSupabaseNotConfigured, supabaseRestAsServiceRole } from "@/lib/supabase-rest";
 
 const uuidSchema = z.string().uuid();
-const dateSchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/).refine((value) => {
+const dateSchema = z.string().regex(/^\\d{4}-\\d{2}-\\d{2}$/).refine((value) => {
   const date = new Date(value + "T00:00:00.000Z");
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 });
@@ -15,6 +16,9 @@ type AvailabilitySlot = {
 };
 
 export async function GET(request: NextRequest) {
+  const rateLimit = await enforcePublicRateLimit(request, "booking_availability", 45, 60);
+  if (rateLimit) return rateLimit;
+
   const params = request.nextUrl.searchParams;
   const date = params.get("date") ?? "";
   const locationType = params.get("location") ?? "";
@@ -42,7 +46,7 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  if (locationType === "home" && !/^\d{6}$/.test(postalCode)) {
+  if (locationType === "home" && !/^\\d{6}$/.test(postalCode)) {
     return NextResponse.json(
       { error: "VALID_PINCODE_REQUIRED" },
       { status: 400, headers: { "Cache-Control": "no-store" } }
@@ -57,7 +61,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const slots = await supabaseRest<AvailabilitySlot[]>(
+    const slots = await supabaseRestAsServiceRole<AvailabilitySlot[]>(
       "/rest/v1/rpc/get_appointment_availability",
       {
         method: "POST",

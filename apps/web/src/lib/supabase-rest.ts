@@ -1,4 +1,6 @@
-import { getPublicEnv } from "@/lib/env";
+import "server-only";
+
+import { getPublicEnv, getServerEnv } from "@/lib/env";
 
 type SupabaseError = {
   code?: string;
@@ -12,7 +14,7 @@ export type SupabaseAuthUser = {
   email?: string;
 };
 
-function getSupabaseConfig() {
+function getPublicSupabaseConfig() {
   const env = getPublicEnv();
   const url = env.NEXT_PUBLIC_SUPABASE_URL;
   const key = env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -26,10 +28,15 @@ function getSupabaseConfig() {
   return { url: normalizedUrl, key };
 }
 
-async function requestRest<T>(path: string, init: RequestInit, bearer: string): Promise<T> {
-  const { url, key } = getSupabaseConfig();
+async function requestRest<T>(
+  path: string,
+  init: RequestInit,
+  bearer: string,
+  apiKey: string
+): Promise<T> {
+  const { url } = getPublicSupabaseConfig();
   const headers = new Headers(init.headers);
-  headers.set("apikey", key);
+  headers.set("apikey", apiKey);
   headers.set("Authorization", "Bearer " + bearer);
   if (init.body !== undefined && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
@@ -66,8 +73,8 @@ export async function supabaseRest<T>(
   path: string,
   init: RequestInit = {}
 ): Promise<T> {
-  const { key } = getSupabaseConfig();
-  return requestRest<T>(path, init, key);
+  const { key } = getPublicSupabaseConfig();
+  return requestRest<T>(path, init, key, key);
 }
 
 /** Runs a PostgREST request in the caller's authenticated JWT/RLS context. */
@@ -76,12 +83,34 @@ export async function supabaseRestAsUser<T>(
   accessToken: string,
   init: RequestInit = {}
 ): Promise<T> {
-  return requestRest<T>(path, init, accessToken);
+  const { key } = getPublicSupabaseConfig();
+  return requestRest<T>(path, init, accessToken, key);
+}
+
+/**
+ * Privileged request for server-only API routes. The service-role credential is
+ * used as both bearer and apikey header, and is never returned to callers.
+ */
+export async function supabaseRestAsServiceRole<T>(
+  path: string,
+  init: RequestInit = {}
+): Promise<T> {
+  if (!path.startsWith("/rest/v1/")) {
+    throw new Error("SERVICE_ROLE_PATH_NOT_ALLOWED");
+  }
+
+  const env = getServerEnv();
+  const serviceRoleKey = env.SUPABASE_SERVICE_ROLE_KEY;
+  if (!serviceRoleKey) {
+    throw new Error("SUPABASE_SERVICE_ROLE_KEY_NOT_CONFIGURED");
+  }
+
+  return requestRest<T>(path, init, serviceRoleKey, serviceRoleKey);
 }
 
 /** Validates a user access token with Supabase Auth; never trusts decoded client claims. */
 export async function supabaseAuthUser(accessToken: string): Promise<SupabaseAuthUser> {
-  const { url, key } = getSupabaseConfig();
+  const { url, key } = getPublicSupabaseConfig();
   const response = await fetch(url + "/auth/v1/user", {
     headers: {
       apikey: key,
@@ -103,5 +132,8 @@ export async function supabaseAuthUser(accessToken: string): Promise<SupabaseAut
 }
 
 export function isSupabaseNotConfigured(error: unknown) {
-  return error instanceof Error && error.message === "SUPABASE_NOT_CONFIGURED";
+  return error instanceof Error && (
+    error.message === "SUPABASE_NOT_CONFIGURED" ||
+    error.message === "SUPABASE_SERVICE_ROLE_KEY_NOT_CONFIGURED"
+  );
 }

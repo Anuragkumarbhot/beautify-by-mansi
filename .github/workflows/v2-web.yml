@@ -28,7 +28,10 @@ jobs:
       - name: Install dependencies
         run: npm install --no-audit --no-fund
 
-      - name: Run existing V1 tests
+      - name: Run dependency security audit
+        run: npm audit --audit-level=high
+
+      - name: Run existing V1 and V2 security tests
         run: npm test
 
       - name: Type-check V2
