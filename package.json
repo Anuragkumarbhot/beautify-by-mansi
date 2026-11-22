@@ -12,7 +12,8 @@
     "build:web": "npm run build --workspace @beautify-by-mansi/web",
     "start:web": "npm run start --workspace @beautify-by-mansi/web",
     "lint:web": "npm run lint --workspace @beautify-by-mansi/web",
-    "typecheck:web": "npm run typecheck --workspace @beautify-by-mansi/web"
+    "typecheck:web": "npm run typecheck --workspace @beautify-by-mansi/web",
+    "test:staging": "node scripts/v2-staging-check.mjs"
   },
   "engines": {
     "node": ">=20"
