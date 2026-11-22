@@ -12,6 +12,7 @@ export function StoreHeader() {
         BEAUTIFY <span>by Mansi</span>
       </Link>
       <nav aria-label="Store navigation">
+        <Link href="/academy">Academy</Link>
         <Link href="/shop">Shop nails</Link>
         <Link href="/account">My account</Link>
         <Link className="store-bag" href="/cart" aria-label={"Shopping bag with " + itemCount + " items"}>

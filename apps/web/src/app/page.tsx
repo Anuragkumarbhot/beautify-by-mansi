@@ -16,6 +16,11 @@ const services = [
     description: "Enquire about availability and plan your beauty appointment.",
     href: "/book",
   },
+  {
+    title: "Training & Academy",
+    description: "Explore online and offline makeup artistry and nail technician classes.",
+    href: "/academy",
+  },
 ];
 
 export default function HomePage() {
@@ -27,6 +32,7 @@ export default function HomePage() {
         </Link>
         <nav aria-label="Main navigation">
           <a href="#services">Services</a>
+          <Link href="/academy">Academy</Link>
           <Link href="/shop">Shop nails</Link>
           <Link href="/book">Appointments</Link>
         </nav>

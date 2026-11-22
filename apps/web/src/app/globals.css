@@ -111,3 +111,101 @@ undefined
 .booking-management-services h2{font-family:Georgia,serif;font-weight:400;color:#553642;font-size:20px}
 .booking-management-services p{display:flex;justify-content:space-between;gap:12px;padding:9px 0;border-bottom:1px solid #f0e8e3;color:#735c58;font-size:12px}
 .booking-home-link{display:block;margin-top:14px;color:#765665;font-size:12px;text-decoration:underline}
+
+
+/* Beautify by Mansi — Training & Academy */
+.store-header{min-height:72px;padding:0 6vw;display:flex;align-items:center;justify-content:space-between;gap:22px;background:#fbf8f5;border-bottom:1px solid #eaded7}
+.store-wordmark{color:#4d2937;text-decoration:none;font-size:14px;letter-spacing:.14em;font-weight:700;white-space:nowrap}
+.store-wordmark span{color:#a77b65;font-weight:500;letter-spacing:.03em}
+.store-header nav{display:flex;align-items:center;gap:22px;flex-wrap:wrap}
+.store-header nav a{color:#785b5b;text-decoration:none;font-size:12px}
+.store-header nav a:hover,.store-header nav a:focus-visible{color:#4d2937;text-decoration:underline;text-underline-offset:4px}
+.store-header .store-bag{display:flex;align-items:center;gap:8px}
+.store-bag span{display:inline-grid;place-items:center;min-width:22px;height:22px;border-radius:50%;background:#714455;color:#fff;font-size:10px}
+.academy-page{background:#fbf8f5;color:#382a2d;overflow:hidden}
+.academy-container{width:min(1120px,calc(100% - 48px));margin:0 auto}
+.academy-hero{background:linear-gradient(115deg,#f6ece7 0%,#f8f3ef 52%,#eee0dd 100%);padding:82px 0 76px;border-bottom:1px solid #eaded7}
+.academy-hero-grid{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(280px,.7fr);gap:60px;align-items:center}
+.academy-eyebrow{margin:0 0 13px;color:#a47b68;font-size:10px;letter-spacing:.2em;font-weight:700}
+.academy-hero h1,.academy-section-heading h2,.academy-enquiry h2{margin:0;color:#4b2936;font-family:Georgia,serif;font-weight:400;letter-spacing:-.035em;font-size:clamp(42px,6vw,68px);line-height:1.04}
+.academy-hero h1 em,.academy-section-heading h2 em,.academy-enquiry h2 em{color:#986f70;font-weight:400}
+.academy-lead{max-width:610px;color:#76635f;font-size:15px;line-height:1.85;margin:24px 0}
+.academy-hero-actions,.academy-enquiry-actions{display:flex;gap:11px;flex-wrap:wrap}
+.academy-button{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:46px;padding:0 18px;text-decoration:none;font-size:12px;letter-spacing:.02em;transition:transform .18s ease,background .18s ease}
+.academy-button:hover{transform:translateY(-2px)}
+.academy-button-primary{background:#6a3d4e;border:1px solid #6a3d4e;color:#fff}
+.academy-button-primary:hover{background:#512c3b}
+.academy-button-secondary{background:transparent;border:1px solid #b99c91;color:#694957}
+.academy-button-secondary:hover{background:#fff8f4}
+.academy-tags{display:flex;gap:9px;flex-wrap:wrap;margin-top:28px}
+.academy-tags span{padding:7px 11px;border:1px solid #dfcbc3;border-radius:30px;color:#80645f;font-size:10px;letter-spacing:.04em}
+.academy-hero-panel{position:relative;min-height:350px;padding:42px 36px;display:flex;flex-direction:column;justify-content:flex-end;background:linear-gradient(145deg,#6a4050,#4b2b3b 70%,#342333);color:#f8eeea;box-shadow:0 22px 55px rgba(70,42,53,.13)}
+.academy-panel-mark{position:absolute;top:28px;right:30px;font-family:Georgia,serif;font-size:36px;color:#d7b7a8;letter-spacing:-.08em}
+.academy-panel-kicker{margin:0 0 14px;color:#d6b49f;font-size:9px;letter-spacing:.2em}
+.academy-hero-panel h2{margin:0;font-family:Georgia,serif;font-weight:400;font-size:34px;line-height:1.12}
+.academy-hero-panel h2 em{color:#dbb8a7}
+.academy-hero-panel>p:last-child{max-width:300px;color:#e4d1cb;font-size:12px;line-height:1.75;margin:18px 0 0}
+.academy-section{padding-top:82px;padding-bottom:82px}
+.academy-section-heading{max-width:680px;margin-bottom:34px}
+.academy-section-heading h2{font-size:clamp(34px,4.7vw,49px)}
+.academy-section-heading>p:last-child{max-width:600px;color:#806d67;font-size:13px;line-height:1.8;margin:16px 0 0}
+.academy-format-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px}
+.academy-format-card{position:relative;min-height:295px;padding:30px;background:#fff;border:1px solid #eaded7}
+.academy-card-number{position:absolute;top:25px;right:27px;color:#d7c2b8;font-family:Georgia,serif;font-size:32px}
+.academy-card-label{margin:0 0 8px;color:#a47b68;font-size:9px;letter-spacing:.17em;text-transform:uppercase}
+.academy-format-card h3{margin:0;color:#583744;font-family:Georgia,serif;font-size:29px;font-weight:400}
+.academy-card-description{max-width:500px;color:#7d6a64;font-size:12px;line-height:1.8}
+.academy-format-card ul,.academy-course-content ul{list-style:none;margin:18px 0;padding:0;display:grid;gap:9px}
+.academy-format-card li,.academy-course-content li{position:relative;padding-left:19px;color:#765e59;font-size:11px;line-height:1.6}
+.academy-format-card li:before,.academy-course-content li:before{content:"";position:absolute;left:0;top:.55em;width:7px;height:7px;border-radius:50%;background:#b88e7b}
+.academy-format-card>a,.academy-text-link{display:inline-block;color:#714455;text-decoration:none;font-size:11px;border-bottom:1px solid #c9a99b;padding-bottom:4px;margin-top:8px}
+.academy-format-card>a:hover,.academy-text-link:hover{color:#a06470}
+.academy-programmes{background:#f4ece7;padding:82px 0}
+.academy-course-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px}
+.academy-course-card{background:#fff;border:1px solid #e8d9d1;min-width:0}
+.academy-course-topline{display:flex;justify-content:space-between;padding:15px 20px;color:#97766c;font-size:9px;letter-spacing:.16em;border-bottom:1px solid #eee4df}
+.academy-course-art{height:155px;display:flex;align-items:center;justify-content:center;gap:8px;flex-direction:column;color:#fff;font-family:Georgia,serif;font-size:29px;letter-spacing:.16em;line-height:1}
+.academy-course-art span:last-child{font-size:13px;letter-spacing:.32em}
+.academy-course-art-makeup{background:radial-gradient(circle at 75% 25%,#c69a87 0%,transparent 34%),linear-gradient(120deg,#76505b,#a87876 55%,#d3aa98)}
+.academy-course-art-nails{background:radial-gradient(circle at 25% 30%,#d4b6ae 0%,transparent 34%),linear-gradient(120deg,#453342,#775468 55%,#a87e80)}
+.academy-course-content{padding:26px 28px 30px}
+.academy-course-content .academy-eyebrow{font-size:9px}
+.academy-course-content h3{margin:0;color:#543341;font-family:Georgia,serif;font-size:28px;font-weight:400}
+.academy-course-content>p:not(.academy-eyebrow){color:#806c66;font-size:12px;line-height:1.8}
+.academy-course-content ul{gap:8px;margin:18px 0 22px}
+.academy-steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px}
+.academy-steps article{padding:23px 22px;border-top:1px solid #c9a99b;background:#fff}
+.academy-steps article>span{color:#b18a78;font-family:Georgia,serif;font-size:22px}
+.academy-steps h3{margin:12px 0 7px;color:#5a3946;font-family:Georgia,serif;font-size:20px;font-weight:400}
+.academy-steps p{margin:0;color:#806d67;font-size:11px;line-height:1.8}
+.academy-enquiry{padding:68px 0;background:#eadbd5}
+.academy-enquiry-inner{display:flex;justify-content:space-between;align-items:center;gap:40px}
+.academy-enquiry h2{font-size:clamp(36px,5vw,54px)}
+.academy-enquiry-inner>div:first-child>p:not(.academy-eyebrow){max-width:570px;color:#735b56;font-size:13px;line-height:1.8;margin:17px 0 0}
+.academy-enquiry-inner .academy-fine-print{font-size:10px!important;color:#957c73!important}
+.academy-enquiry-actions{min-width:230px;flex-direction:column;align-items:stretch}
+.academy-footer{display:flex;justify-content:space-between;gap:20px;padding:22px 6vw;background:#fbf8f5;color:#9a8279;font-size:10px;letter-spacing:.04em}
+@media(max-width:760px){
+  .store-header{padding:15px 20px;align-items:flex-start;flex-direction:column;gap:13px}
+  .store-header nav{width:100%;gap:15px;justify-content:space-between}
+  .store-header nav a{font-size:11px}
+  .academy-container{width:min(calc(100% - 36px),1120px)}
+  .academy-hero{padding:58px 0 50px}
+  .academy-hero-grid{grid-template-columns:1fr;gap:34px}
+  .academy-hero-panel{min-height:260px;padding:30px}
+  .academy-format-grid,.academy-course-grid{grid-template-columns:1fr}
+  .academy-section,.academy-programmes{padding-top:58px;padding-bottom:58px}
+  .academy-format-card{padding:23px}
+  .academy-course-content{padding:23px}
+  .academy-steps{grid-template-columns:1fr}
+  .academy-enquiry{padding:55px 0}
+  .academy-enquiry-inner{align-items:flex-start;flex-direction:column;gap:26px}
+  .academy-enquiry-actions{width:100%}
+  .academy-footer{padding:20px;flex-direction:column;gap:8px}
+}
+@media(max-width:380px){
+  .store-header nav{gap:9px}
+  .store-header nav a{font-size:10px}
+  .academy-hero-actions{align-items:stretch;flex-direction:column}
+  .academy-button{width:100%}
+}

@@ -8,7 +8,7 @@ export const metadata: Metadata = {
     template: "%s | Beautify by Mansi",
   },
   description:
-    "Professional makeup artistry and thoughtfully designed press-on nails by Beautify by Mansi.",
+    "Makeup artistry, press-on nails, and online or offline beauty training by Beautify by Mansi.",
   applicationName: "Beautify by Mansi",
 };
 
