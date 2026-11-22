@@ -331,7 +331,7 @@ where n.nspname = 'public'
 order by p.proname;
 ```
 
-Expected: both functions appear, both are security-definer functions, and anonymous execution is granted so the public API can call them. The functions validate requests and do not expose staff identities or customer records. Keep the booking switch disabled until the application and operational checks are complete.
+Expected at this intermediate point (after migration 008 and before migration 011): both functions appear, both are security-definer functions, and anonymous execution is granted. This is not the final V2 permission state. Migration 011 revokes execution from `anon` and `authenticated` and grants these RPCs to `service_role` only. After migrations 007–012, the final expected state is `anon_can_execute = false`, `authenticated_can_execute = false`, and `service_role_can_execute = true`; use `supabase/verification/v2_staging_smoke_tests.sql` for the final checks. Keep the booking switch disabled until staging QA is ready.
 
 ## 12. V2 launch-readiness security controls (migration 011)
 

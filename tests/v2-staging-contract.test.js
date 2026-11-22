@@ -39,3 +39,11 @@ test("staging runbook keeps production isolated and requires a disabled-switch b
   assert.match(doc, /restore it to false/i);
   assert.match(doc, /007_v2_appointment_booking\.sql[\s\S]*012_v2_guest_booking_sessions\.sql/);
 });
+
+test("setup guide labels migration 008 grants as intermediate and points to final grants", () => {
+  const setup = read("supabase/SETUP.md");
+  assert.match(setup, /intermediate point \(after migration 008 and before migration 011\)/i);
+  assert.match(setup, /Migration 011 revokes execution from `anon` and `authenticated`/);
+  assert.match(setup, /v2_staging_smoke_tests\.sql/);
+  assert.doesNotMatch(setup, /Expected: both functions appear[\s\S]{0,220}anonymous execution is granted/i);
+});
