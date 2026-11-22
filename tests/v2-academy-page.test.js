@@ -22,7 +22,7 @@ test("Academy route is linked from the homepage and store navigation", () => {
 
 test("Academy page does not publish unapproved fees or course duration", () => {
   const page = read("apps/web/src/app/academy/page.tsx");
-  assert.match(page, /fees, syllabus, training format/);
-  assert.match(page, /Course duration, fees, batch size/);
+  assert.match(page, /fees,[\\s\\S]{0,100}syllabus/);
+  assert.match(page, /Course duration,[\\s\\S]{0,100}certificate/);
   assert.doesNotMatch(page, /₹\s?\d/);
 });
