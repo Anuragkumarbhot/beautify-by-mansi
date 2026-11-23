@@ -5,7 +5,7 @@ import { VirtualStore } from "@/components/virtual-store";
 export const metadata: Metadata = {
   title: "Virtual Nail Boutique",
   description:
-    "Explore the Beautify by Mansi press-on nail collection in an interactive 3D-inspired virtual showroom.",
+    "Explore the Beautify by Mansi press-on nail collection in a virtual boutique with an interactive Three.js nail preview.",
 };
 
 export default function VirtualStorePage() {
