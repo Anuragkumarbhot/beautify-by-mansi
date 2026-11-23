@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRef, useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
 import { useCart } from "@/features/cart/cart-context";
 import {
   formatPrice,
@@ -43,13 +43,14 @@ export function VirtualStore() {
     visibleProducts[0] ??
     products[0];
 
-  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+  function handlePointerDown(event: ReactPointerEvent<HTMLDivElement>) {
     if (event.pointerType === "mouse" && event.button !== 0) return;
+    if ((event.target as HTMLElement).closest("button, a, input, select, textarea")) return;
     dragRef.current = { x: event.clientX, y: event.clientY };
     event.currentTarget.setPointerCapture(event.pointerId);
   }
 
-  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+  function handlePointerMove(event: ReactPointerEvent<HTMLDivElement>) {
     if (!dragRef.current) return;
     const deltaX = event.clientX - dragRef.current.x;
     const deltaY = event.clientY - dragRef.current.y;
