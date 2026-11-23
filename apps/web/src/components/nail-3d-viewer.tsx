@@ -77,6 +77,7 @@ export function Nail3DViewer({
       });
     } catch {
       canvas.dataset.webgl = "unavailable";
+      canvas.style.display = "none";
       return;
     }
 
