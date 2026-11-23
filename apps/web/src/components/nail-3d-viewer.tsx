@@ -85,6 +85,7 @@ export function Nail3DViewer({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const groupRef = useRef<THREE.Group | null>(null);
   const cameraRef = useRef<THREE.PerspectiveCamera | null>(null);
+  const renderRef = useRef<(() => void) | null>(null);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -277,6 +278,7 @@ export function Nail3DViewer({
     }
 
     const render = () => renderer.render(scene, camera);
+    renderRef.current = render;
     const resize = () => {
       const width = Math.max(canvas.clientWidth, 1);
       const height = Math.max(canvas.clientHeight, 1);
@@ -349,6 +351,7 @@ export function Nail3DViewer({
         }
       });
       renderer.dispose();
+      renderRef.current = null;
       groupRef.current = null;
       cameraRef.current = null;
     };
@@ -358,20 +361,13 @@ export function Nail3DViewer({
     const camera = cameraRef.current;
     if (!camera) return;
     camera.position.z = THREE.MathUtils.clamp(camera.position.z + amount, 3.2, 5.8);
-    const canvas = canvasRef.current;
-    if (canvas) {
-      const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
-      if (context) {
-        // The render loop is event-driven; dispatching a resize keeps the canvas in sync.
-        window.dispatchEvent(new Event("resize"));
-      }
-    }
+    renderRef.current?.();
   }
 
   function resetView() {
     groupRef.current?.rotation.set(0, 0, 0);
     if (cameraRef.current) cameraRef.current.position.set(0, 0.05, 4.35);
-    window.dispatchEvent(new Event("resize"));
+    renderRef.current?.();
   }
 
   return (
