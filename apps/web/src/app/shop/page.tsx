@@ -17,6 +17,7 @@ export default function ShopPage() {
           <p className="eyebrow">THE BEAUTY EDIT · PRESS-ON NAILS</p>
           <h1>Your next favourite<br /><em>is at your fingertips.</em></h1>
           <p>Discover expressive nail designs, choose your fit, and send the studio an order enquiry.</p>
+          <Link className="text-link" href="/virtual-store">Enter the 3D virtual boutique ↗</Link>
           <Link className="text-link" href="/cart">View your bag ↗</Link>
         </div>
         <section className="catalogue-section" aria-label="Press-on nail catalogue">
