@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, type CSSProperties } from "react";
+import { useRef, useState, type CSSProperties } from "react";
 import { useCart } from "@/features/cart/cart-context";
 import {
   formatPrice,
@@ -28,6 +28,9 @@ export function VirtualStore() {
   const [filter, setFilter] = useState<Filter>("all");
   const [selectedId, setSelectedId] = useState(products[0]?.id ?? "");
   const [rotation, setRotation] = useState(0);
+  const [tilt, setTilt] = useState(0);
+  const [zoom, setZoom] = useState(0.96);
+  const dragRef = useRef<{ x: number; y: number } | null>(null);
   const [size, setSize] = useState("");
   const [sizingNotes, setSizingNotes] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -39,6 +42,31 @@ export function VirtualStore() {
     visibleProducts.find((product) => product.id === selectedId) ??
     visibleProducts[0] ??
     products[0];
+
+  function handlePointerDown(event: React.PointerEvent<HTMLDivElement>) {
+    if (event.pointerType === "mouse" && event.button !== 0) return;
+    dragRef.current = { x: event.clientX, y: event.clientY };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (!dragRef.current) return;
+    const deltaX = event.clientX - dragRef.current.x;
+    const deltaY = event.clientY - dragRef.current.y;
+    dragRef.current = { x: event.clientX, y: event.clientY };
+    setRotation((value) => Math.max(-38, Math.min(38, value + deltaX * 0.42)));
+    setTilt((value) => Math.max(-9, Math.min(9, value - deltaY * 0.18)));
+  }
+
+  function handlePointerEnd() {
+    dragRef.current = null;
+  }
+
+  function resetCamera() {
+    setRotation(0);
+    setTilt(0);
+    setZoom(0.96);
+  }
 
   function selectProduct(product: Product) {
     setSelectedId(product.id);
@@ -91,9 +119,11 @@ export function VirtualStore() {
             <h2>Choose your display.</h2>
           </div>
           <div className={styles.viewControls} aria-label="Showroom camera controls">
-            <button type="button" onClick={() => setRotation((value) => Math.max(-12, value - 6))} aria-label="Rotate showroom left">↶</button>
-            <button type="button" onClick={() => setRotation(0)} aria-label="Reset showroom view">Reset view</button>
-            <button type="button" onClick={() => setRotation((value) => Math.min(12, value + 6))} aria-label="Rotate showroom right">↷</button>
+            <button type="button" onClick={() => setRotation((value) => Math.max(-38, value - 8))} aria-label="Rotate showroom left">↶</button>
+            <button type="button" onClick={() => setZoom((value) => Math.max(0.78, Number((value - 0.08).toFixed(2))))} aria-label="Zoom out">−</button>
+            <button type="button" onClick={resetCamera} aria-label="Reset showroom camera">Reset</button>
+            <button type="button" onClick={() => setZoom((value) => Math.min(1.2, Number((value + 0.08).toFixed(2))))} aria-label="Zoom in">+</button>
+            <button type="button" onClick={() => setRotation((value) => Math.min(38, value + 8))} aria-label="Rotate showroom right">↷</button>
           </div>
         </div>
 
@@ -120,7 +150,16 @@ export function VirtualStore() {
         <div className={styles.sceneFrame}>
           <div
             className={styles.scene}
-            style={{ "--yaw": rotation + "deg" } as CSSProperties}
+            style={{
+              "--yaw": rotation + "deg",
+              "--tilt": tilt + "deg",
+              "--zoom": String(zoom),
+            } as CSSProperties}
+            onPointerDown={handlePointerDown}
+            onPointerMove={handlePointerMove}
+            onPointerUp={handlePointerEnd}
+            onPointerCancel={handlePointerEnd}
+            onLostPointerCapture={handlePointerEnd}
           >
             <div className={styles.room}>
               <div className={styles.backWall}>
@@ -187,7 +226,7 @@ export function VirtualStore() {
           <div className={styles.sceneHint}>
             <span className={styles.liveDot} />
             Interactive showroom
-            <span>Use the arrows to change your view · Tap a product to inspect it</span>
+            <span>Drag to look around · Use + / − to zoom · Tap a product to inspect it</span>
           </div>
         </div>
 
