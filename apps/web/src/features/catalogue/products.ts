@@ -9,6 +9,8 @@ export type Product = {
   tag: string;
   description: string;
   image: string;
+  /** Optional public GLB/GLTF URL; omitted until a verified product model exists. */
+  model3d?: string;
 };
 
 export const products: Product[] = [
