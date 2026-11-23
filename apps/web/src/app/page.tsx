@@ -12,6 +12,11 @@ const services = [
     href: "/shop",
   },
   {
+    title: "Virtual Nail Boutique",
+    description: "Step into an interactive showroom and explore the press-on collection in 3D.",
+    href: "/virtual-store",
+  },
+  {
     title: "Studio Appointments",
     description: "Enquire about availability and plan your beauty appointment.",
     href: "/book",
@@ -34,6 +39,7 @@ export default function HomePage() {
           <a href="#services">Services</a>
           <Link href="/academy">Academy</Link>
           <Link href="/shop">Shop nails</Link>
+          <Link href="/virtual-store">Virtual store</Link>
           <Link href="/book">Appointments</Link>
         </nav>
       </header>
@@ -48,6 +54,7 @@ export default function HomePage() {
         <div className="hero-actions">
           <Link className="button button-primary" href="/book">Enquire about an appointment</Link>
           <Link className="button button-secondary" href="/shop">Explore press-on nails</Link>
+          <Link className="button button-secondary" href="/virtual-store">Enter the 3D boutique</Link>
         </div>
         <p className="hero-note">A new digital experience is taking shape.</p>
       </section>
@@ -58,9 +65,9 @@ export default function HomePage() {
           <h2>Beauty, with a personal touch.</h2>
         </div>
         <div className="service-grid">
-          {services.map((service) => (
+          {services.map((service, index) => (
             <article className="service-card" key={service.title}>
-              <p className="card-index">0{services.indexOf(service) + 1}</p>
+              <p className="card-index">{String(index + 1).padStart(2, "0")}</p>
               <h3>{service.title}</h3>
               <p>{service.description}</p>
               <Link href={service.href}>Discover more <span aria-hidden="true">↗</span></Link>
