@@ -132,3 +132,12 @@
 .viewerHint{position:absolute;right:0;bottom:24px;left:0;margin:0;text-align:center;color:#886e6b;font-size:9px;letter-spacing:.06em;pointer-events:none}
 .viewerDisclaimer{position:absolute;right:9px;bottom:8px;color:#a08b82;font-size:7px;letter-spacing:.04em;pointer-events:none}
 @media(prefers-reduced-motion:reduce){.nailCanvas{cursor:default}}
+
+.viewerControls{display:flex;align-items:center;gap:5px;pointer-events:auto}
+.viewerControls button{min-width:27px;min-height:25px;border:1px solid rgba(151,112,112,.35);background:rgba(255,250,247,.9);padding:4px 7px;color:#70515d;font:inherit;font-size:9px;letter-spacing:.04em;cursor:pointer}
+.viewerControls button:focus-visible{outline:2px solid #8b5b70;outline-offset:2px}
+@media(max-width:420px){
+.viewerTopline{top:8px;right:8px;left:8px;font-size:7px}
+.viewerControls{gap:3px}
+.viewerControls button{min-width:25px;min-height:25px;padding:4px 6px}
+}
