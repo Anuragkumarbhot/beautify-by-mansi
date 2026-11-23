@@ -19,8 +19,8 @@
 .filterBar button.activeFilter{background:#603b4b;border-color:#603b4b;color:#fff}
 .filterBar>span{margin-left:auto;color:#a18c84;font-size:10px;letter-spacing:.05em}
 .sceneFrame{overflow:hidden;border:1px solid #e7d8d1;background:#e9ddd7;box-shadow:0 18px 46px rgba(80,48,55,.08)}
-.scene{position:relative;isolation:isolate;min-height:660px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#fff9f5 0,#f1e4de 57%,#dfccc5 100%);perspective:1250px}
-.room{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(var(--yaw)) scale(.96);transform-origin:50% 55%;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.scene{position:relative;isolation:isolate;min-height:660px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#fff9f5 0,#f1e4de 57%,#dfccc5 100%);perspective:1250px;touch-action:pan-y;cursor:grab;user-select:none}
+.scene:active{cursor:grabbing}.room{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(var(--tilt,0deg)) rotateY(var(--yaw,0deg)) scale(var(--zoom,.96));transform-origin:50% 55%;transition:transform .18s cubic-bezier(.2,.7,.2,1);pointer-events:none}.room button,.room a{pointer-events:auto}
 .backWall{position:absolute;z-index:2;top:6%;left:10%;width:80%;height:67%;padding:23px 26px 24px;transform:translateZ(-105px);border:1px solid rgba(176,137,120,.45);background:linear-gradient(145deg,#fffaf6 0%,#f5e8e1 54%,#ead8d1 100%);box-shadow:0 22px 40px rgba(87,53,58,.17);display:flex;flex-direction:column;align-items:center}
 .wallBrand{display:flex;flex-direction:column;align-items:center;line-height:1}
 .wallBrand>span{font-size:clamp(14px,2vw,20px);font-weight:700;letter-spacing:.28em;color:#704657}
