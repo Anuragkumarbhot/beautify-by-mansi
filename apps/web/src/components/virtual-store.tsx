@@ -11,6 +11,7 @@ import {
   type ProductCategory,
 } from "@/features/catalogue/products";
 import styles from "./virtual-store.module.css";
+import { Nail3DViewer } from "./nail-3d-viewer";
 
 type Filter = "all" | ProductCategory;
 
@@ -104,7 +105,7 @@ export function VirtualStore() {
         <p className={styles.eyebrow}>BEAUTIFY BY MANSI · DIGITAL FLAGSHIP</p>
         <h1>Step inside the<br /><em>nail boutique.</em></h1>
         <p className={styles.lede}>
-          Explore the collection in an interactive 3D-inspired showroom. Select a display
+          Explore the collection in an interactive showroom with a live 3D nail preview. Select a display
           to discover its design, choose your fit, and add it to your bag.
         </p>
         <div className={styles.introLinks}>
@@ -233,11 +234,11 @@ export function VirtualStore() {
 
         <div className={styles.productPanel} aria-live="polite">
           <div className={styles.selectedImage}>
-            <Image
-              src={selectedProduct.image}
-              alt={selectedProduct.name + " press-on nail design"}
-              fill
-              sizes="(max-width: 760px) 100vw, 340px"
+            <Nail3DViewer
+              productId={selectedProduct.id}
+              productName={selectedProduct.name}
+              category={selectedProduct.category}
+              image={selectedProduct.image}
             />
           </div>
           <div className={styles.productInfo}>
