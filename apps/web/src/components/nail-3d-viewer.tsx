@@ -53,6 +53,29 @@ function createNailGeometry() {
   });
 }
 
+function addFineLine(
+  parent: THREE.Group,
+  points: THREE.Vector3[],
+  material: THREE.Material,
+  radius = 0.008
+) {
+  const curve = new THREE.CatmullRomCurve3(points);
+  const geometry = new THREE.TubeGeometry(curve, 18, radius, 6, false);
+  parent.add(new THREE.Mesh(geometry, material));
+}
+
+function addFrenchTip(parent: THREE.Group, material: THREE.Material) {
+  const shape = new THREE.Shape();
+  shape.moveTo(-0.245, 0.39);
+  shape.quadraticCurveTo(0, 0.34, 0.245, 0.39);
+  shape.lineTo(0.235, 0.52);
+  shape.quadraticCurveTo(0, 0.67, -0.235, 0.52);
+  shape.closePath();
+  const tip = new THREE.Mesh(new THREE.ShapeGeometry(shape, 16), material);
+  tip.position.z = 0.094;
+  parent.add(tip);
+}
+
 export function Nail3DViewer({
   productId,
   productName,
@@ -126,52 +149,142 @@ export function Nail3DViewer({
       roughness: 0.18,
       clearcoat: 1,
     });
+    const goldMaterial = new THREE.MeshStandardMaterial({
+      color: "#d6ad72",
+      metalness: 0.82,
+      roughness: 0.2,
+    });
+    const silverMaterial = new THREE.MeshStandardMaterial({
+      color: "#e9e4e7",
+      metalness: 0.9,
+      roughness: 0.16,
+    });
+    const pearlMaterial = new THREE.MeshPhysicalMaterial({
+      color: "#fff4e8",
+      metalness: 0.18,
+      roughness: 0.1,
+      clearcoat: 1,
+    });
 
     const offsets = [-0.92, -0.49, 0, 0.49, 0.92];
     const rotations = [-0.34, -0.17, 0, 0.17, 0.34];
+
     offsets.forEach((offset, index) => {
+      const nailGroup = new THREE.Group();
+      nailGroup.position.set(offset, Math.abs(offset) * -0.16, index === 2 ? 0.12 : 0);
+      nailGroup.rotation.z = rotations[index];
+      const scale = index === 0 || index === 4 ? 0.78 : index === 1 || index === 3 ? 0.91 : 1;
+      nailGroup.scale.set(scale, index === 0 || index === 4 ? 0.88 : 1, 1);
+      group.add(nailGroup);
+
       const nail = new THREE.Mesh(nailGeometry, nailMaterial);
-      nail.position.set(offset, Math.abs(offset) * -0.16, index === 2 ? 0.12 : 0);
-      nail.rotation.z = rotations[index];
-      nail.scale.set(index === 0 || index === 4 ? 0.78 : index === 1 || index === 3 ? 0.91 : 1, index === 0 || index === 4 ? 0.88 : 1, 1);
       nail.castShadow = true;
       nail.receiveShadow = true;
-      group.add(nail);
+      nailGroup.add(nail);
 
-      if (productId === "rose-french" || productId === "bridal-glow" || productId === "pearl-glaze") {
-        const tip = new THREE.Mesh(
-          new THREE.SphereGeometry(0.035, 12, 8),
-          accentMaterial
+      if (productId === "rose-french" || productId === "bridal-glow") {
+        addFrenchTip(nailGroup, accentMaterial);
+        if (productId === "bridal-glow") {
+          addFineLine(nailGroup, [
+            new THREE.Vector3(-0.18, 0.28, 0.11),
+            new THREE.Vector3(0, 0.24, 0.115),
+            new THREE.Vector3(0.18, 0.28, 0.11),
+          ], goldMaterial, 0.006);
+        }
+      }
+
+      if (productId === "velvet-wine") {
+        addFineLine(nailGroup, [
+          new THREE.Vector3(0, -0.32, 0.105),
+          new THREE.Vector3(0.015, 0.02, 0.105),
+          new THREE.Vector3(0, 0.34, 0.105),
+        ], goldMaterial, 0.009);
+        if (index % 2 === 0) {
+          const dot = new THREE.Mesh(new THREE.SphereGeometry(0.025, 10, 8), goldMaterial);
+          dot.position.set(0.09, 0.12, 0.12);
+          nailGroup.add(dot);
+        }
+      }
+
+      if (productId === "pearl-glaze") {
+        const pearl = new THREE.Mesh(new THREE.SphereGeometry(0.045, 14, 10), pearlMaterial);
+        pearl.position.set(0, 0.1, 0.13);
+        pearl.scale.set(1, 0.85, 0.48);
+        nailGroup.add(pearl);
+      }
+
+      if (productId === "cherry-chrome") {
+        [-0.12, 0.02, 0.16].forEach((y) => {
+          addFineLine(nailGroup, [
+            new THREE.Vector3(-0.19, y - 0.06, 0.11),
+            new THREE.Vector3(0, y, 0.115),
+            new THREE.Vector3(0.19, y + 0.06, 0.11),
+          ], silverMaterial, 0.012);
+        });
+      }
+
+      if (productId === "soft-nude") {
+        addFineLine(nailGroup, [
+          new THREE.Vector3(-0.17, -0.22, 0.11),
+          new THREE.Vector3(-0.12, 0.08, 0.11),
+          new THREE.Vector3(-0.04, 0.32, 0.11),
+        ], goldMaterial, 0.006);
+      }
+
+      if (productId === "golden-hour") {
+        [-0.13, 0.02, 0.14].forEach((x, fleckIndex) => {
+          const fleck = new THREE.Mesh(
+            new THREE.SphereGeometry(fleckIndex === 1 ? 0.035 : 0.022, 10, 8),
+            goldMaterial
+          );
+          fleck.position.set(x, fleckIndex === 1 ? 0.18 : -0.04 + fleckIndex * 0.16, 0.12);
+          fleck.scale.set(1.1, 0.65, 0.35);
+          nailGroup.add(fleck);
+        });
+      }
+
+      if (productId === "midnight-gloss") {
+        const star = new THREE.Mesh(new THREE.OctahedronGeometry(0.045, 0), silverMaterial);
+        star.position.set(index % 2 === 0 ? -0.08 : 0.09, 0.16, 0.13);
+        nailGroup.add(star);
+        const dot = new THREE.Mesh(new THREE.SphereGeometry(0.018, 8, 6), pearlMaterial);
+        dot.position.set(0.1, -0.12, 0.12);
+        nailGroup.add(dot);
+      }
+
+      if (productId === "bridal-glow" && index === 2) {
+        const gem = new THREE.Mesh(
+          new THREE.OctahedronGeometry(0.105, 0),
+          new THREE.MeshPhysicalMaterial({
+            color: "#fff0e0",
+            metalness: 0.35,
+            roughness: 0.08,
+            transmission: 0.12,
+            clearcoat: 1,
+          })
         );
-        tip.position.set(offset, Math.abs(offset) * -0.16 + 0.48, 0.13);
-        tip.scale.set(1.2, 0.55, 0.3);
-        group.add(tip);
+        gem.position.set(0, 0.08, 0.19);
+        gem.rotation.y = Math.PI / 4;
+        nailGroup.add(gem);
       }
     });
 
-    if (category === "bridal" || productId === "pearl-glaze") {
-      const gem = new THREE.Mesh(
-        new THREE.OctahedronGeometry(0.105, 0),
-        new THREE.MeshPhysicalMaterial({
-          color: "#fff0e0",
-          metalness: 0.35,
-          roughness: 0.08,
-          transmission: 0.12,
-          clearcoat: 1,
-        })
-      );
-      gem.position.set(0, 0.12, 0.22);
-      gem.rotation.y = Math.PI / 4;
-      group.add(gem);
+    if (productId === "pearl-glaze") {
+      const centerPearl = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 12), pearlMaterial);
+      centerPearl.position.set(0, 0.02, 0.31);
+      centerPearl.scale.set(1, 1, 0.55);
+      group.add(centerPearl);
     }
 
+    const render = () => renderer.render(scene, camera);
     const resize = () => {
       const width = Math.max(canvas.clientWidth, 1);
       const height = Math.max(canvas.clientHeight, 1);
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       renderer.setSize(width, height, false);
       camera.aspect = width / height;
       camera.updateProjectionMatrix();
+      render();
     };
 
     const observer = new ResizeObserver(resize);
@@ -183,6 +296,7 @@ export function Nail3DViewer({
     let previousY = 0;
 
     const onPointerDown = (event: PointerEvent) => {
+      if (event.pointerType === "mouse" && event.button !== 0) return;
       dragging = true;
       previousX = event.clientX;
       previousY = event.clientY;
@@ -198,6 +312,7 @@ export function Nail3DViewer({
       );
       previousX = event.clientX;
       previousY = event.clientY;
+      render();
     };
     const onPointerUp = () => {
       dragging = false;
@@ -209,6 +324,7 @@ export function Nail3DViewer({
         3.2,
         5.8
       );
+      render();
     };
 
     canvas.addEventListener("pointerdown", onPointerDown);
@@ -217,26 +333,15 @@ export function Nail3DViewer({
     canvas.addEventListener("pointercancel", onPointerUp);
     canvas.addEventListener("wheel", onWheel, { passive: false });
 
-    let frame = 0;
-    const render = () => {
-      renderer.render(scene, camera);
-      frame = window.requestAnimationFrame(render);
-    };
-    render();
-
     return () => {
-      window.cancelAnimationFrame(frame);
       observer.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
       canvas.removeEventListener("pointercancel", onPointerUp);
       canvas.removeEventListener("wheel", onWheel);
-      nailGeometry.dispose();
-      nailMaterial.dispose();
-      accentMaterial.dispose();
       scene.traverse((object) => {
-        if (object instanceof THREE.Mesh && object.geometry !== nailGeometry) {
+        if (object instanceof THREE.Mesh) {
           object.geometry.dispose();
           const material = object.material;
           if (Array.isArray(material)) material.forEach((item) => item.dispose());
@@ -249,9 +354,24 @@ export function Nail3DViewer({
     };
   }, [productId, category]);
 
+  function zoomBy(amount: number) {
+    const camera = cameraRef.current;
+    if (!camera) return;
+    camera.position.z = THREE.MathUtils.clamp(camera.position.z + amount, 3.2, 5.8);
+    const canvas = canvasRef.current;
+    if (canvas) {
+      const context = canvas.getContext("webgl2") ?? canvas.getContext("webgl");
+      if (context) {
+        // The render loop is event-driven; dispatching a resize keeps the canvas in sync.
+        window.dispatchEvent(new Event("resize"));
+      }
+    }
+  }
+
   function resetView() {
     groupRef.current?.rotation.set(0, 0, 0);
     if (cameraRef.current) cameraRef.current.position.set(0, 0.05, 4.35);
+    window.dispatchEvent(new Event("resize"));
   }
 
   return (
@@ -266,13 +386,17 @@ export function Nail3DViewer({
       <canvas
         ref={canvasRef}
         className={styles.nailCanvas}
-        aria-label={"Interactive illustrative 3D model of " + productName + " press-on nails. Drag to rotate and scroll to zoom."}
+        aria-label={"Interactive illustrative 3D model of " + productName + " press-on nails. Drag to rotate and use zoom controls."}
       />
       <div className={styles.viewerTopline}>
         <span>3D DESIGN PREVIEW</span>
-        <button type="button" onClick={resetView}>Reset view</button>
+        <div className={styles.viewerControls}>
+          <button type="button" onClick={() => zoomBy(-0.35)} aria-label="Zoom in">+</button>
+          <button type="button" onClick={() => zoomBy(0.35)} aria-label="Zoom out">−</button>
+          <button type="button" onClick={resetView}>Reset</button>
+        </div>
       </div>
-      <p className={styles.viewerHint}>Drag to rotate · Scroll to zoom</p>
+      <p className={styles.viewerHint}>Drag to rotate · Use + / − to zoom</p>
       <span className={styles.viewerDisclaimer}>Illustrative 3D sample · Actual nail art may vary</span>
     </div>
   );
