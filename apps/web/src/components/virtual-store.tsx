@@ -239,6 +239,7 @@ export function VirtualStore() {
               productName={selectedProduct.name}
               category={selectedProduct.category}
               image={selectedProduct.image}
+              model3d={selectedProduct.model3d}
             />
           </div>
           <div className={styles.productInfo}>
