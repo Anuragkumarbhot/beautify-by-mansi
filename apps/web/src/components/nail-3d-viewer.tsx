@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useEffect, useRef } from "react";
 import * as THREE from "three";
+import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader.js";
 import type { ProductCategory } from "@/features/catalogue/products";
 import styles from "./virtual-store.module.css";
 
@@ -11,6 +12,7 @@ type Nail3DViewerProps = {
   productName: string;
   category: ProductCategory;
   image: string;
+  model3d?: string;
 };
 
 type Palette = {
@@ -81,6 +83,7 @@ export function Nail3DViewer({
   productName,
   category,
   image,
+  model3d,
 }: Nail3DViewerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const groupRef = useRef<THREE.Group | null>(null);
@@ -125,8 +128,49 @@ export function Nail3DViewer({
     scene.add(rimLight);
 
     const group = new THREE.Group();
+    const proceduralGroup = new THREE.Group();
+    group.add(proceduralGroup);
     groupRef.current = group;
     scene.add(group);
+
+    let disposed = false;
+    if (model3d) {
+      const loader = new GLTFLoader();
+      loader.load(
+        model3d,
+        (gltf) => {
+          if (disposed) {
+            gltf.scene.traverse((object) => {
+              if (object instanceof THREE.Mesh) {
+                object.geometry.dispose();
+                const materials = Array.isArray(object.material) ? object.material : [object.material];
+                materials.forEach((material) => material.dispose());
+              }
+            });
+            return;
+          }
+          const bounds = new THREE.Box3().setFromObject(gltf.scene);
+          const center = bounds.getCenter(new THREE.Vector3());
+          const size = bounds.getSize(new THREE.Vector3());
+          const maxDimension = Math.max(size.x, size.y, size.z) || 1;
+          gltf.scene.position.sub(center);
+          gltf.scene.scale.setScalar(1.65 / maxDimension);
+          gltf.scene.traverse((object) => {
+            if (object instanceof THREE.Mesh) {
+              object.castShadow = true;
+              object.receiveShadow = true;
+            }
+          });
+          proceduralGroup.visible = false;
+          group.add(gltf.scene);
+          renderRef.current?.();
+        },
+        undefined,
+        () => {
+          // Keep the procedural preview visible if an optional model is unavailable.
+        }
+      );
+    }
 
     const palette = palettes[productId] ?? {
       base: category === "bridal" ? "#d6a98e" : category === "glam" ? "#79364e" : "#d9b4aa",
@@ -176,7 +220,7 @@ export function Nail3DViewer({
       nailGroup.rotation.z = rotations[index];
       const scale = index === 0 || index === 4 ? 0.78 : index === 1 || index === 3 ? 0.91 : 1;
       nailGroup.scale.set(scale, index === 0 || index === 4 ? 0.88 : 1, 1);
-      group.add(nailGroup);
+      proceduralGroup.add(nailGroup);
 
       const nail = new THREE.Mesh(nailGeometry, nailMaterial);
       nail.castShadow = true;
@@ -274,7 +318,7 @@ export function Nail3DViewer({
       const centerPearl = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 12), pearlMaterial);
       centerPearl.position.set(0, 0.02, 0.31);
       centerPearl.scale.set(1, 1, 0.55);
-      group.add(centerPearl);
+      proceduralGroup.add(centerPearl);
     }
 
     const render = () => renderer.render(scene, camera);
@@ -336,6 +380,7 @@ export function Nail3DViewer({
     canvas.addEventListener("wheel", onWheel, { passive: false });
 
     return () => {
+      disposed = true;
       observer.disconnect();
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
@@ -355,7 +400,7 @@ export function Nail3DViewer({
       groupRef.current = null;
       cameraRef.current = null;
     };
-  }, [productId, category]);
+  }, [productId, category, model3d]);
 
   function zoomBy(amount: number) {
     const camera = cameraRef.current;
