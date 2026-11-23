@@ -1,0 +1,124 @@
+.page{--plum:#603b4b;--rose:#b98791;--gold:#b18a61;--ink:#392b31;--muted:#816f6d;max-width:1240px;margin:0 auto;padding:48px 28px 28px;color:var(--ink)}
+.intro{max-width:760px;margin:0 auto 34px;text-align:center}
+.eyebrow{margin:0 0 11px;color:#a17c70;font-size:10px;font-weight:700;letter-spacing:.2em;text-transform:uppercase}
+.intro h1{margin:0;color:#4d2d3c;font-family:Georgia,serif;font-size:clamp(42px,6vw,68px);font-weight:400;line-height:.98;letter-spacing:-.035em}
+.intro h1 em{color:#a77978;font-weight:400}
+.lede{max-width:610px;margin:18px auto 0;color:var(--muted);font-size:14px;line-height:1.8}
+.introLinks{display:flex;align-items:center;justify-content:center;gap:22px;flex-wrap:wrap;margin-top:21px;font-size:11px}
+.introLinks a{color:var(--plum);text-decoration:none;border-bottom:1px solid #c6a4a2;padding-bottom:3px}
+.introLinks span{color:#a38c85;letter-spacing:.05em}
+.showroomSection{margin-top:42px}
+.showroomHeading{display:flex;align-items:flex-end;justify-content:space-between;gap:18px;margin-bottom:16px}
+.showroomHeading h2{margin:0;color:#553642;font-family:Georgia,serif;font-size:clamp(26px,4vw,34px);font-weight:400}
+.viewControls{display:flex;align-items:center;gap:7px}
+.viewControls button{min-width:38px;height:36px;border:1px solid #e4d6d0;background:#fff;color:#664555;padding:0 10px;cursor:pointer;font:inherit;font-size:12px;transition:background .2s,border-color .2s}
+.viewControls button:hover{background:#f6eeeb;border-color:#c8a9a7}
+.viewControls button:nth-child(2){min-width:78px;font-size:10px;letter-spacing:.05em}
+.filterBar{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:0 0 14px}
+.filterBar button{border:1px solid #eaded8;background:#fff;color:#806d68;padding:8px 13px;font-size:10px;letter-spacing:.04em;cursor:pointer}
+.filterBar button.activeFilter{background:#603b4b;border-color:#603b4b;color:#fff}
+.filterBar>span{margin-left:auto;color:#a18c84;font-size:10px;letter-spacing:.05em}
+.sceneFrame{overflow:hidden;border:1px solid #e7d8d1;background:#e9ddd7;box-shadow:0 18px 46px rgba(80,48,55,.08)}
+.scene{position:relative;isolation:isolate;min-height:660px;overflow:hidden;background:radial-gradient(ellipse at 50% 45%,#fff9f5 0,#f1e4de 57%,#dfccc5 100%);perspective:1250px}
+.room{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateY(var(--yaw)) scale(.96);transform-origin:50% 55%;transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.backWall{position:absolute;z-index:2;top:6%;left:10%;width:80%;height:67%;padding:23px 26px 24px;transform:translateZ(-105px);border:1px solid rgba(176,137,120,.45);background:linear-gradient(145deg,#fffaf6 0%,#f5e8e1 54%,#ead8d1 100%);box-shadow:0 22px 40px rgba(87,53,58,.17);display:flex;flex-direction:column;align-items:center}
+.wallBrand{display:flex;flex-direction:column;align-items:center;line-height:1}
+.wallBrand>span{font-size:clamp(14px,2vw,20px);font-weight:700;letter-spacing:.28em;color:#704657}
+.wallBrand small{margin-top:5px;color:#a37b70;font-family:Georgia,serif;font-size:14px;font-style:italic}
+.wallBrand i{margin-top:8px;color:#b09080;font-size:7px;font-style:normal;letter-spacing:.3em}
+.wallShelf{position:relative;width:100%;margin-top:20px;padding:13px 14px 16px;background:linear-gradient(180deg,#ead7ce,#f4e9e3 12%,#e9d8d0 100%);border:1px solid #d9c2b9;box-shadow:inset 0 3px 7px rgba(93,55,58,.08),0 8px 12px rgba(93,55,58,.09)}
+.shelfLabel{margin:0 0 10px;text-align:center;color:#8f6d67;font-size:8px;letter-spacing:.2em}
+.displayGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:9px}
+.displayCard{min-width:0;display:flex;flex-direction:column;gap:4px;align-items:stretch;border:1px solid rgba(193,164,151,.68);background:linear-gradient(180deg,#fffdfa,#f4e9e4);padding:5px 5px 7px;color:#5f4049;text-align:left;cursor:pointer;box-shadow:0 3px 6px rgba(90,54,62,.08);transition:transform .2s,border-color .2s,box-shadow .2s}
+.displayCard:hover{transform:translateY(-4px);box-shadow:0 8px 14px rgba(90,54,62,.16)}
+.displayCard.selectedDisplay{border:2px solid #9b6576;padding:4px 4px 6px;box-shadow:0 0 0 2px rgba(155,101,118,.15),0 7px 12px rgba(90,54,62,.12)}
+.displayImage{position:relative;display:block;width:100%;aspect-ratio:1.18/1;overflow:hidden;background:#e7d7d0}
+.displayImage img{object-fit:cover;transition:transform .3s}
+.displayCard:hover .displayImage img{transform:scale(1.05)}
+.displayNumber{position:absolute;top:4px;left:4px;display:grid;place-items:center;width:18px;height:18px;background:rgba(255,250,246,.9);color:#7f5c61;font-size:8px}
+.displayName{overflow:hidden;color:#523743;font-family:Georgia,serif;font-size:clamp(9px,1.1vw,13px);line-height:1.15;text-overflow:ellipsis;white-space:nowrap}
+.displayPrice{color:#9b786f;font-size:9px}
+.wallPlinth{position:absolute;right:-1px;bottom:-9px;left:-1px;height:10px;background:linear-gradient(180deg,#c4a99e,#a8887e);box-shadow:0 5px 8px rgba(85,52,55,.13)}
+.leftWall,.rightWall{position:absolute;z-index:1;top:7%;bottom:19%;width:20%;border:1px solid rgba(177,139,122,.32);background:linear-gradient(140deg,#ead5cd,#c9aaa0);box-shadow:inset 0 0 35px rgba(111,71,75,.12)}
+.leftWall{left:3%;transform-origin:left center;transform:rotateY(68deg) translateZ(-15px)}
+.rightWall{right:3%;transform-origin:right center;transform:rotateY(-68deg) translateZ(-15px)}
+.wallSconce{position:absolute;top:20%;left:50%;width:27px;height:66px;transform:translateX(-50%);border-radius:20px 20px 8px 8px;background:linear-gradient(90deg,#b48c74,#f8e9ce 45%,#bd957a);box-shadow:0 0 32px rgba(255,235,194,.7)}
+.wallArt{position:absolute;top:45%;left:50%;transform:translateX(-50%);width:53px;height:66px;display:grid;place-content:center;text-align:center;border:1px solid #c49e8d;background:#f7eee8;color:#845c68;font-family:Georgia,serif;font-size:15px;line-height:1.1}
+.rightWallText{position:absolute;top:46%;left:50%;transform:translateX(-50%);color:#865f67;text-align:center;font-family:Georgia,serif;font-size:11px;line-height:1.6;letter-spacing:.16em}
+.floor{position:absolute;z-index:0;right:4%;bottom:-32%;left:4%;height:59%;transform-origin:center top;transform:rotateX(76deg) translateZ(-15px);background:repeating-linear-gradient(90deg,rgba(166,130,116,.11) 0,rgba(166,130,116,.11) 1px,transparent 1px,transparent 86px),linear-gradient(180deg,#d8c1b5,#b9968b);border:1px solid rgba(155,117,104,.4);box-shadow:0 -5px 25px rgba(91,56,60,.12)}
+.floorInlay{position:absolute;inset:16% 23%;border:1px solid rgba(255,245,236,.55);border-radius:50%}
+.centerIsland{position:absolute;z-index:4;bottom:9%;left:35%;width:30%;height:19%;transform:translateZ(56px);filter:drop-shadow(0 18px 12px rgba(72,42,47,.2))}
+.islandTop{position:absolute;top:0;left:0;width:100%;height:48%;border-radius:50%;border:2px solid #d6b6a6;background:radial-gradient(ellipse at 50% 35%,#fffdf8 0,#eee0d9 70%,#d1b3a7 100%);box-shadow:inset 0 -5px 7px rgba(122,82,79,.12)}
+.islandFront{position:absolute;top:27%;right:8%;bottom:0;left:8%;display:flex;align-items:center;justify-content:center;gap:5px;border:1px solid #cba99a;border-top:0;background:linear-gradient(90deg,#b99083,#ead4c9 22%,#f8e9df 50%,#d6b5a8 82%,#ae897e);color:#704657;font-size:9px;font-weight:700;letter-spacing:.16em}
+.islandFront i{font-family:Georgia,serif;font-size:11px;font-weight:400;letter-spacing:0}
+.sceneCaption{position:absolute;z-index:5;right:5%;bottom:3%;left:5%;display:flex;justify-content:space-between;gap:10px;color:rgba(87,57,62,.65);font-size:8px;letter-spacing:.15em}
+.sceneHint{display:flex;align-items:center;gap:9px;min-height:39px;padding:0 15px;background:#fffaf7;color:#755b5b;font-size:10px;letter-spacing:.04em}
+.sceneHint>span:last-child{margin-left:auto;color:#a08d83}
+.liveDot{width:7px;height:7px;border-radius:50%;background:#8b9c79;box-shadow:0 0 0 3px rgba(139,156,121,.13)}
+.productPanel{display:grid;grid-template-columns:minmax(230px,340px) minmax(0,1fr);gap:clamp(22px,4vw,48px);margin:22px 0 0;padding:22px;background:#fffdfa;border:1px solid #eaded8;box-shadow:0 12px 35px rgba(79,48,54,.045)}
+.selectedImage{position:relative;min-height:300px;overflow:hidden;background:#eadbd4}
+.selectedImage img{object-fit:cover}
+.productInfo{display:flex;flex-direction:column;align-items:flex-start;padding:6px 0}
+.productInfo h3{margin:0;color:#553642;font-family:Georgia,serif;font-size:clamp(29px,4vw,39px);font-weight:400}
+.productDescription{margin:9px 0 10px;color:#806f6a;font-size:13px;line-height:1.65}
+.productPrice{margin:1px 0 19px;color:#775263;font-family:Georgia,serif;font-size:22px;font-weight:400}
+.fieldLabel{display:grid;gap:7px;width:min(100%,410px);margin:0 0 13px;color:#705d58;font-size:11px}
+.fieldLabel select,.fieldLabel textarea,.productInfo>select{width:min(100%,410px);min-height:43px;border:1px solid #dfd1ca;background:#fff;padding:10px 12px;color:#392a2c;font:inherit;font-size:12px}
+.fieldLabel textarea{resize:vertical}
+.productInfo>select{margin-bottom:14px}
+.productActions{display:flex;align-items:center;gap:17px;flex-wrap:wrap;margin-top:1px}
+.productActions button{min-height:44px;border:1px solid #603b4b;background:#603b4b;color:#fff;padding:0 23px;font-size:11px;letter-spacing:.06em;cursor:pointer;transition:background .2s}
+.productActions button:hover{background:#765366}
+.productActions a{color:#775263;font-size:11px;text-decoration:none;border-bottom:1px solid #c9a8a8;padding-bottom:3px}
+.feedback{margin:12px 0 0;color:#54704e;font-size:12px}
+.finePrint{max-width:530px;margin:14px 0 0;color:#a08d83;font-size:10px;line-height:1.6}
+.footerNote{display:flex;justify-content:space-between;gap:12px;margin:34px 0 0;color:#a08c82;font-size:9px;letter-spacing:.14em}
+@media(max-width:760px){
+.page{padding:34px 16px 22px}
+.intro{margin-bottom:27px}
+.showroomSection{margin-top:32px}
+.showroomHeading{align-items:flex-start;flex-direction:column}
+.viewControls{align-self:flex-end;margin-top:-4px}
+.scene{min-height:580px}
+.backWall{top:8%;left:7%;width:86%;height:65%;padding:18px 13px 17px;transform:translateZ(-72px)}
+.wallShelf{margin-top:17px;padding:10px 8px 13px}
+.displayGrid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+.displayCard{padding:4px}
+.displayCard.selectedDisplay{padding:3px}
+.displayImage{aspect-ratio:1/1}
+.displayName{font-size:9px}
+.displayPrice{font-size:8px}
+.leftWall,.rightWall{top:10%;bottom:19%;width:15%}
+.leftWall{left:0;transform:rotateY(70deg) translateZ(-8px)}
+.rightWall{right:0;transform:rotateY(-70deg) translateZ(-8px)}
+.wallArt{width:35px;height:48px;font-size:11px}
+.wallSconce{width:19px;height:49px}
+.rightWallText{font-size:8px}
+.centerIsland{bottom:10%;left:32%;width:36%;height:17%;transform:translateZ(34px)}
+.sceneCaption{font-size:7px;bottom:3%}
+.sceneHint{align-items:flex-start;flex-wrap:wrap;padding:10px 12px}
+.sceneHint>span:last-child{width:100%;margin-left:16px}
+.productPanel{grid-template-columns:1fr;gap:18px;padding:15px}
+.selectedImage{min-height:280px;max-height:380px}
+.productInfo{padding:0 2px 5px}
+.footerNote{flex-direction:column;line-height:1.6}
+}
+@media(max-width:420px){
+.scene{min-height:525px}
+.backWall{top:9%;left:5%;width:90%;height:63%;padding:15px 9px}
+.wallBrand>span{font-size:14px}
+.wallBrand small{font-size:12px}
+.wallBrand i{font-size:6px}
+.wallShelf{margin-top:13px;padding:8px 6px 11px}
+.displayGrid{gap:4px}
+.displayCard{gap:3px;padding:3px}
+.displayCard.selectedDisplay{padding:2px}
+.displayName{font-size:8px}
+.displayPrice{font-size:7px}
+.sceneCaption{font-size:6px}
+.leftWall,.rightWall{width:12%}
+.centerIsland{bottom:9%;height:15%}
+}
+@media(prefers-reduced-motion:reduce){
+.room,.displayCard,.displayImage img,.viewControls button,.productActions button{transition:none}
+}
